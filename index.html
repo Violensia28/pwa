@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TechPartner 6.0 (PWA) — Operasional Teknisi</title>
+  <title>TechPartner 6.1 (PWA) — Operasional Teknisi</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icons/icon-192.png" />
@@ -73,7 +73,7 @@
     <div class="brand">
       <div class="logo">TP</div>
       <div>
-        <h1>TechPartner <span style="color:#60a5fa">6.0</span></h1>
+        <h1>TechPartner <span style="color:#60a5fa">6.1</span></h1>
         <small>Hybrid Modular • PWA • GitHub Pages</small>
       </div>
     </div>
@@ -108,34 +108,19 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap">
               <button class="pbtn" id="btnScan">Scan QR</button>
               <button class="pbtn" id="btnAddAsset">Tambah Aset</button>
+              <button class="pbtn" id="btnLocations">Kelola Lokasi</button>
               <button class="pbtn" id="btnBackup">Backup</button>
               <button class="pbtn" id="btnRestore">Restore</button>
             </div>
           </div>
 
           <div class="grid" style="margin-top:12px">
-            <div class="col-4">
-              <label>Site</label>
-              <select id="fSite"></select>
-            </div>
-            <div class="col-4">
-              <label>Gedung</label>
-              <select id="fBuilding"></select>
-            </div>
-            <div class="col-4">
-              <label>Lantai</label>
-              <select id="fFloor"></select>
-            </div>
-            <div class="col-4">
-              <label>Ruang/Zona</label>
-              <select id="fRoom"></select>
-            </div>
-            <div class="col-4">
-              <label>Jenis</label>
-              <select id="fType"></select>
-            </div>
-            <div class="col-4">
-              <label>Kondisi</label>
+            <div class="col-4"><label>Site</label><select id="fSite"></select></div>
+            <div class="col-4"><label>Gedung</label><select id="fBuilding"></select></div>
+            <div class="col-4"><label>Lantai</label><select id="fFloor"></select></div>
+            <div class="col-4"><label>Ruang/Zona</label><select id="fRoom"></select></div>
+            <div class="col-4"><label>Jenis</label><select id="fType"></select></div>
+            <div class="col-4"><label>Kondisi</label>
               <select id="fCond">
                 <option value="">Semua</option>
                 <option>Normal</option>
@@ -174,9 +159,7 @@
               <b>Work Order (WO)</b>
               <div class="muted">Open → On Progress → Done → Verified (atasan)</div>
             </div>
-            <div class="actions">
-              <button class="pbtn" id="btnAddWO">Buat WO</button>
-            </div>
+            <div class="actions"><button class="pbtn" id="btnAddWO">Buat WO</button></div>
           </div>
         </div>
         <div class="col-12">
@@ -195,9 +178,7 @@
               <b>Laporan Kinerja (Activity)</b>
               <div class="muted">Catat kegiatan teknisi + foto before/after (multi).</div>
             </div>
-            <div class="actions">
-              <button class="pbtn" id="btnAddAct">Input Kegiatan</button>
-            </div>
+            <div class="actions"><button class="pbtn" id="btnAddAct">Input Kegiatan</button></div>
           </div>
         </div>
         <div class="col-12">
@@ -216,9 +197,7 @@
               <b>Keuangan</b>
               <div class="muted">Input bon + kategori + tautan ke WO/Aset.</div>
             </div>
-            <div class="actions">
-              <button class="pbtn" id="btnAddFin">Input Bon</button>
-            </div>
+            <div class="actions"><button class="pbtn" id="btnAddFin">Input Bon</button></div>
           </div>
         </div>
         <div class="col-12 card">
@@ -239,7 +218,7 @@
       <div class="grid">
         <div class="col-12 card no-print">
           <b>Reports (Harian / Mingguan / Bulanan)</b>
-          <div class="muted">Mode Web untuk atasan + PDF (standar & formal).</div>
+          <div class="muted">Mode Web untuk atasan + PDF (standar & formal) akan ditambahkan tahap berikutnya.</div>
           <div class="grid" style="margin-top:12px">
             <div class="col-4"><label>Periode</label>
               <select id="repMode">
@@ -256,11 +235,8 @@
             <button class="pbtn" id="btnPDFStd">PDF Standar</button>
             <button class="pbtn" id="btnPDFFormal">PDF Formal</button>
           </div>
-          <div class="muted small" style="margin-top:10px">Catatan: generator PDF/Excel akan memakai library (bisa ditambahkan tahap berikutnya). Saat ini ringkasan web sudah tersedia.</div>
         </div>
-        <div class="col-12 card" id="repBox">
-          <div class="muted">Klik “Tampilkan Ringkasan”.</div>
-        </div>
+        <div class="col-12 card" id="repBox"><div class="muted">Klik “Tampilkan Ringkasan”.</div></div>
       </div>
     </section>
   </main>
@@ -269,16 +245,8 @@
   <div class="modal" id="mSettings">
     <div class="panel">
       <header>
-        <div class="brand">
-          <div class="logo">⚙</div>
-          <div>
-            <h1>Pengaturan</h1>
-            <small>GitHub Sync • AI Key • Mode Atasan</small>
-          </div>
-        </div>
-        <div class="topbtns">
-          <button class="btn" id="btnCloseSettings">Tutup</button>
-        </div>
+        <div class="brand"><div class="logo">⚙</div><div><h1>Pengaturan</h1><small>GitHub Sync • Mode Atasan • Template Laporan</small></div></div>
+        <div class="topbtns"><button class="btn" id="btnCloseSettings">Tutup</button></div>
       </header>
       <div style="padding:14px" class="grid">
         <div class="col-6 card">
@@ -286,7 +254,7 @@
           <p class="muted small">Isi jika ingin sync. Jika kosong, aplikasi tetap jalan lokal/offline.</p>
           <div class="grid">
             <div class="col-12"><label>Owner</label><input id="ghOwner" placeholder="username" /></div>
-            <div class="col-12"><label>Repo</label><input id="ghRepo" placeholder="nama-repo" /></div>
+            <div class="col-12"><label>Repo</label><input id="ghRepo" placeholder="pwa" /></div>
             <div class="col-12"><label>Path DB</label><input id="ghPath" placeholder="data/db_partner.json" /></div>
             <div class="col-12"><label>Token</label><input id="ghToken" placeholder="ghp_..." type="password" /></div>
           </div>
@@ -294,7 +262,7 @@
 
         <div class="col-6 card">
           <b>Mode Atasan (Read-only)</b>
-          <p class="muted small">Akses atasan: lihat dashboard + verifikasi WO. Tidak bisa edit/hapus.</p>
+          <p class="muted small">Atasan: lihat dashboard + verifikasi WO. Tidak bisa edit/hapus.</p>
           <div class="grid">
             <div class="col-12"><label>PIN Admin</label><input id="pinAdmin" type="password" placeholder="set pin" /></div>
             <div class="col-12"><label>PIN Atasan</label><input id="pinViewer" type="password" placeholder="set pin" /></div>
@@ -308,17 +276,60 @@
         </div>
 
         <div class="col-12 card">
+          <b>Template Laporan (Editable)</b>
+          <p class="muted small">Kosongkan jika tidak ingin kop tetap. Bisa diisi kapan saja.</p>
+          <div class="grid">
+            <div class="col-6"><label>Nama Instansi/Kop</label><input id="orgName" placeholder="(kosong / editable)" /></div>
+            <div class="col-6"><label>Prefix Nomor Dokumen</label><input id="docPrefix" placeholder="OPS-LOG" /></div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
           <b>Keamanan Minimal</b>
           <ul class="muted small">
             <li>Jangan pernah commit token/API key ke repo. Simpan hanya di perangkat (localStorage).</li>
             <li>Jangan simpan kredensial perangkat IT (password). Hanya info non-kredensial.</li>
-            <li>Output AI (jika dipakai) wajib disajikan sebagai text aman (hindari HTML injection).</li>
+            <li>Jika memakai AI, tampilkan output sebagai text aman (hindari HTML injection).</li>
           </ul>
         </div>
 
         <div class="col-12 actions">
           <button class="pbtn primary" id="btnSaveSettings">Simpan</button>
           <button class="pbtn" id="btnClearLocal">Reset Data Lokal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOCATIONS MODAL -->
+  <div class="modal" id="mLoc">
+    <div class="panel">
+      <header>
+        <div class="brand"><div class="logo">📍</div><div><h1>Kelola Lokasi</h1><small>Site → Gedung → Lantai → Ruang</small></div></div>
+        <div class="topbtns"><button class="btn" id="btnCloseLoc">Tutup</button></div>
+      </header>
+      <div style="padding:14px" class="grid">
+        <div class="col-12 card">
+          <b>Tambah Lokasi</b>
+          <div class="grid" style="margin-top:10px">
+            <div class="col-4"><label>Parent</label><select id="locParent"></select></div>
+            <div class="col-4"><label>Tipe</label>
+              <select id="locType">
+                <option value="building">Gedung</option>
+                <option value="floor">Lantai</option>
+                <option value="room">Ruang/Zona</option>
+              </select>
+            </div>
+            <div class="col-4"><label>Nama</label><input id="locName" placeholder="cth: Gedung Utama / Lt.2 / Ruang Server"/></div>
+          </div>
+          <div class="actions" style="margin-top:10px"><button class="pbtn primary" id="btnAddLoc">Tambah</button></div>
+          <div class="muted small" style="margin-top:8px">Parent Gedung=Site, Parent Lantai=Gedung, Parent Ruang=Lantai.</div>
+        </div>
+
+        <div class="col-12 card">
+          <b>Daftar Lokasi</b>
+          <div class="muted small">Klik item untuk hapus (tidak ada undo). Tidak bisa hapus jika masih punya child/terpakai aset.</div>
+          <div id="locList" style="display:grid; grid-template-columns:repeat(12,1fr); gap:10px; margin-top:10px"></div>
         </div>
       </div>
     </div>
@@ -342,15 +353,11 @@
 
         <div class="col-6"><label>Lokasi (Ruang)</label><select id="assetRoom"></select></div>
         <div class="col-6"><label>Kritikalitas</label>
-          <select id="assetCrit">
-            <option>Rendah</option><option selected>Sedang</option><option>Tinggi</option>
-          </select>
+          <select id="assetCrit"><option>Rendah</option><option selected>Sedang</option><option>Tinggi</option></select>
         </div>
 
         <div class="col-6"><label>Kondisi</label>
-          <select id="assetCond">
-            <option>Normal</option><option>Perlu Servis</option><option>Rusak</option>
-          </select>
+          <select id="assetCond"><option>Normal</option><option>Perlu Servis</option><option>Rusak</option></select>
         </div>
         <div class="col-6"><label>Interval PM (hari)</label><input id="assetPM" type="number" min="0" placeholder="90" /></div>
 
@@ -389,14 +396,28 @@
         <div class="col-12"><label>Temuan</label><textarea id="woFinding" rows="2"></textarea></div>
         <div class="col-12"><label>Tindakan</label><textarea id="woAction" rows="2"></textarea></div>
         <div class="col-12"><label>Hasil</label><textarea id="woResult" rows="2"></textarea></div>
+
+        <div class="col-12 card">
+          <b>Foto Before/After (Multi)</b>
+          <div class="grid" style="margin-top:10px">
+            <div class="col-6">
+              <label>Before (maks 6)</label>
+              <input id="woBefore" type="file" accept="image/*" multiple />
+              <div id="woBeforePrev" class="row" style="margin-top:8px"></div>
+            </div>
+            <div class="col-6">
+              <label>After (maks 6)</label>
+              <input id="woAfter" type="file" accept="image/*" multiple />
+              <div id="woAfterPrev" class="row" style="margin-top:8px"></div>
+            </div>
+          </div>
+          <div class="muted small" style="margin-top:8px">Foto dikompres otomatis (lebar max 800px, kualitas ~0.6).</div>
+        </div>
+
         <div class="col-12 actions">
           <button type="submit" class="pbtn primary">Simpan</button>
           <button type="button" class="pbtn" id="btnVerifyWO">Mark Verified</button>
           <button type="button" class="pbtn danger" id="btnDeleteWO">Hapus</button>
-        </div>
-        <div class="col-12 card">
-          <b>Foto Before/After</b>
-          <p class="muted small">Versi MVP: belum menyimpan multi-foto. Akan ditambahkan di tahap berikutnya sesuai daftar fitur.</p>
         </div>
       </form>
     </div>
@@ -419,13 +440,26 @@
         <div class="col-6"><label>Terkait WO</label><select id="actWO"></select></div>
         <div class="col-12"><label>Judul</label><input id="actTitle" /></div>
         <div class="col-12"><label>Deskripsi</label><textarea id="actDesc" rows="3"></textarea></div>
+
+        <div class="col-12 card">
+          <b>Foto Before/After (Multi)</b>
+          <div class="grid" style="margin-top:10px">
+            <div class="col-6">
+              <label>Before (maks 6)</label>
+              <input id="actBefore" type="file" accept="image/*" multiple />
+              <div id="actBeforePrev" class="row" style="margin-top:8px"></div>
+            </div>
+            <div class="col-6">
+              <label>After (maks 6)</label>
+              <input id="actAfter" type="file" accept="image/*" multiple />
+              <div id="actAfterPrev" class="row" style="margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="col-12 actions">
           <button type="submit" class="pbtn primary">Simpan</button>
           <button type="button" class="pbtn danger" id="btnDeleteAct">Hapus</button>
-        </div>
-        <div class="col-12 card">
-          <b>Before/After</b>
-          <p class="muted small">Versi MVP: foto belum diaktifkan. Akan ditambahkan sesuai fitur daftar (multi foto + kompres).</p>
         </div>
       </form>
     </div>
@@ -449,11 +483,19 @@
         <div class="col-6"><label>Terkait WO</label><select id="finWO"></select></div>
         <div class="col-6"><label>Terkait Aset</label><select id="finAsset"></select></div>
         <div class="col-12"><label>No Nota (opsional)</label><input id="finNote" /></div>
+
+        <div class="col-12 card">
+          <b>Foto Nota (Multi)</b>
+          <label class="small">Nota (maks 6)</label>
+          <input id="finReceipt" type="file" accept="image/*" multiple />
+          <div id="finReceiptPrev" class="row" style="margin-top:8px"></div>
+          <div class="muted small" style="margin-top:8px">Foto nota dikompres otomatis untuk hemat penyimpanan.</div>
+        </div>
+
         <div class="col-12 actions">
           <button type="submit" class="pbtn primary">Simpan</button>
           <button type="button" class="pbtn danger" id="btnDeleteFin">Hapus</button>
         </div>
-        <div class="col-12 card"><b>Nota Foto</b><p class="muted small">Versi MVP: foto nota belum diaktifkan (akan ditambahkan sesuai daftar).</p></div>
       </form>
     </div>
   </div>

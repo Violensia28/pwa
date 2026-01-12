@@ -1,7 +1,7 @@
 // TechPartner PWA Service Worker (Project Pages safe)
 // Offline-first app shell caching.
 
-const CACHE_NAME = 'techpartner-shell-v1';
+const CACHE_NAME = 'techpartner-shell-v1.1';
 const SHELL = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const SHELL = [
   './assets/pm.js',
   './assets/wo.js',
   './assets/qr.js',
+  './assets/media.js',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
@@ -37,16 +38,13 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Only handle GET
   if (req.method !== 'GET') return;
 
-  // Cache-first for same-origin static assets
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(req).then((cached) => {
         if (cached) return cached;
         return fetch(req).then((resp) => {
-          // Optionally cache runtime assets
           const copy = resp.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(req, copy)).catch(()=>{});
           return resp;
