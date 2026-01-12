@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TechPartner 6.0 (PWA) — Operasional Teknisi</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <style>
+    :root{--bg:#f8fafc;--fg:#0f172a;--muted:#64748b;--card:#fff;--line:#e2e8f0;--accent:#3b82f6;--ok:#10b981;--warn:#f59e0b;--bad:#ef4444;}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:#1e293b;}
+    header{background:var(--fg); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;}
+    .brand{display:flex; gap:10px; align-items:center}
+    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#6366f1);display:grid;place-items:center;font-weight:900}
+    .brand h1{margin:0;font-size:16px; line-height:1.1}
+    .brand small{display:block;color:#a3b2c7;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:10px}
+    .topbtns{display:flex; gap:8px; align-items:center}
+    .btn{border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:#fff; padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:700; font-size:12px}
+    .btn:hover{background:rgba(255,255,255,.1)}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid var(--line); background:#fff}
+    .dot{width:9px;height:9px;border-radius:50%}
+
+    nav{background:#fff; border-bottom:1px solid var(--line); display:flex; gap:8px; padding:10px 12px; position:sticky; top:64px; z-index:40; overflow:auto}
+    nav button{border:1px solid var(--line); background:#fff; padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:800; color:#334155; white-space:nowrap}
+    nav button.active{border-color:var(--accent); color:var(--fg); box-shadow:0 6px 14px rgba(59,130,246,.15)}
+
+    main{padding:14px 12px; max-width:1200px; margin:0 auto}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:12px}
+    .col-12{grid-column:span 12} .col-6{grid-column:span 12} .col-4{grid-column:span 12}
+    @media (min-width:900px){.col-6{grid-column:span 6}.col-4{grid-column:span 4}}
+
+    input,select,textarea{width:100%; padding:10px 10px; border-radius:12px; border:1px solid var(--line); outline:none; background:#fff; color:#0f172a}
+    input:focus,select:focus,textarea:focus{border-color:rgba(59,130,246,.8); box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+    label{font-size:11px; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+
+    .kpi{display:flex; flex-direction:column; gap:6px}
+    .kpi b{font-size:22px}
+
+    .list{display:grid; grid-template-columns:repeat(12,1fr); gap:12px}
+    .item{grid-column:span 12; padding:12px; border:1px solid var(--line); border-radius:16px; background:#fff; position:relative}
+    @media(min-width:900px){.item{grid-column:span 4}}
+    .badge{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.08em}
+    .b-ok{background:rgba(16,185,129,.12); color:#047857}
+    .b-warn{background:rgba(245,158,11,.14); color:#92400e}
+    .b-bad{background:rgba(239,68,68,.14); color:#991b1b}
+    .b-info{background:rgba(99,102,241,.14); color:#3730a3}
+    .muted{color:var(--muted); font-size:12px}
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+    .pbtn{border:1px solid var(--line); background:#fff; padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:900; color:#0f172a}
+    .pbtn.primary{border-color:var(--accent); background:var(--accent); color:#fff}
+    .pbtn.danger{border-color:rgba(239,68,68,.4); color:#991b1b}
+
+    .modal{position:fixed; inset:0; background:rgba(15,23,42,.65); display:none; align-items:center; justify-content:center; padding:14px; z-index:80}
+    .modal.open{display:flex}
+    .modal .panel{width:min(720px,100%); max-height:92vh; overflow:auto; background:#fff; border-radius:18px; border:1px solid rgba(255,255,255,.2)}
+    .modal header{position:sticky; top:0; border-top-left-radius:18px; border-top-right-radius:18px}
+
+    .hide{display:none !important}
+    .small{font-size:12px}
+
+    @media print{
+      header,nav,.no-print{display:none !important}
+      body{background:#fff}
+      main{max-width:none}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">TP</div>
+      <div>
+        <h1>TechPartner <span style="color:#60a5fa">6.0</span></h1>
+        <small>Hybrid Modular • PWA • GitHub Pages</small>
+      </div>
+    </div>
+    <div class="topbtns">
+      <span class="pill" title="Status koneksi">
+        <span class="dot" id="netDot" style="background:var(--ok)"></span>
+        <span id="netText">Online</span>
+      </span>
+      <button class="btn" id="btnSync" title="Sync GitHub">Sync</button>
+      <button class="btn" id="btnSettings" title="Pengaturan">Settings</button>
+    </div>
+  </header>
+
+  <nav class="no-print">
+    <button data-tab="assets" class="active">Aset</button>
+    <button data-tab="wo">WO</button>
+    <button data-tab="activity">Laporan</button>
+    <button data-tab="finance">Keuangan</button>
+    <button data-tab="reports">Reports</button>
+  </nav>
+
+  <main>
+    <!-- ASSETS -->
+    <section id="view-assets">
+      <div class="grid">
+        <div class="col-12 card no-print">
+          <div class="row">
+            <div style="flex:1; min-width:220px">
+              <input id="q" placeholder="Cari cepat: lokasi / inventaris / merk / model / serial" />
+              <div class="muted" style="margin-top:6px">Tip: gunakan pencarian global untuk 200+ aset.</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button class="pbtn" id="btnScan">Scan QR</button>
+              <button class="pbtn" id="btnAddAsset">Tambah Aset</button>
+              <button class="pbtn" id="btnBackup">Backup</button>
+              <button class="pbtn" id="btnRestore">Restore</button>
+            </div>
+          </div>
+
+          <div class="grid" style="margin-top:12px">
+            <div class="col-4">
+              <label>Site</label>
+              <select id="fSite"></select>
+            </div>
+            <div class="col-4">
+              <label>Gedung</label>
+              <select id="fBuilding"></select>
+            </div>
+            <div class="col-4">
+              <label>Lantai</label>
+              <select id="fFloor"></select>
+            </div>
+            <div class="col-4">
+              <label>Ruang/Zona</label>
+              <select id="fRoom"></select>
+            </div>
+            <div class="col-4">
+              <label>Jenis</label>
+              <select id="fType"></select>
+            </div>
+            <div class="col-4">
+              <label>Kondisi</label>
+              <select id="fCond">
+                <option value="">Semua</option>
+                <option>Normal</option>
+                <option>Perlu Servis</option>
+                <option>Rusak</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="grid" style="margin-bottom:12px">
+            <div class="col-4 card kpi"><span class="muted">Total Aset</span><b id="kTotal">0</b></div>
+            <div class="col-4 card kpi"><span class="muted">Overdue PM</span><b id="kOver">0</b></div>
+            <div class="col-4 card kpi"><span class="muted">Rusak</span><b id="kBad">0</b></div>
+          </div>
+          <div class="row no-print" style="justify-content:space-between; margin-bottom:10px">
+            <div class="muted">Tampilan per halaman: <b id="pageInfo">1</b></div>
+            <div class="actions">
+              <button class="pbtn" id="prevPage">Prev</button>
+              <button class="pbtn" id="nextPage">Next</button>
+            </div>
+          </div>
+          <div id="assetList" class="list"></div>
+          <div id="emptyAssets" class="card muted hide">Belum ada aset. Klik “Tambah Aset”.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WO -->
+    <section id="view-wo" class="hide">
+      <div class="grid">
+        <div class="col-12 card no-print">
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <b>Work Order (WO)</b>
+              <div class="muted">Open → On Progress → Done → Verified (atasan)</div>
+            </div>
+            <div class="actions">
+              <button class="pbtn" id="btnAddWO">Buat WO</button>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div id="woList" class="list"></div>
+          <div id="emptyWO" class="card muted hide">Belum ada WO.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section id="view-activity" class="hide">
+      <div class="grid">
+        <div class="col-12 card no-print">
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <b>Laporan Kinerja (Activity)</b>
+              <div class="muted">Catat kegiatan teknisi + foto before/after (multi).</div>
+            </div>
+            <div class="actions">
+              <button class="pbtn" id="btnAddAct">Input Kegiatan</button>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div id="actList" class="list"></div>
+          <div id="emptyAct" class="card muted hide">Belum ada kegiatan.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINANCE -->
+    <section id="view-finance" class="hide">
+      <div class="grid">
+        <div class="col-12 card no-print">
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <b>Keuangan</b>
+              <div class="muted">Input bon + kategori + tautan ke WO/Aset.</div>
+            </div>
+            <div class="actions">
+              <button class="pbtn" id="btnAddFin">Input Bon</button>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 card">
+          <div class="row" style="justify-content:space-between; align-items:baseline">
+            <div class="muted">Total Pengeluaran (YTD)</div>
+            <div style="font-size:22px; font-weight:1000" id="finTotal">Rp 0</div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div id="finList" class="list"></div>
+          <div id="emptyFin" class="card muted hide">Belum ada pengeluaran.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="view-reports" class="hide">
+      <div class="grid">
+        <div class="col-12 card no-print">
+          <b>Reports (Harian / Mingguan / Bulanan)</b>
+          <div class="muted">Mode Web untuk atasan + PDF (standar & formal).</div>
+          <div class="grid" style="margin-top:12px">
+            <div class="col-4"><label>Periode</label>
+              <select id="repMode">
+                <option value="daily">Harian</option>
+                <option value="weekly">Mingguan</option>
+                <option value="monthly">Bulanan</option>
+              </select>
+            </div>
+            <div class="col-4"><label>Dari</label><input type="date" id="repStart"></div>
+            <div class="col-4"><label>Sampai</label><input type="date" id="repEnd"></div>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="pbtn" id="btnWebSummary">Tampilkan Ringkasan</button>
+            <button class="pbtn" id="btnPDFStd">PDF Standar</button>
+            <button class="pbtn" id="btnPDFFormal">PDF Formal</button>
+          </div>
+          <div class="muted small" style="margin-top:10px">Catatan: generator PDF/Excel akan memakai library (bisa ditambahkan tahap berikutnya). Saat ini ringkasan web sudah tersedia.</div>
+        </div>
+        <div class="col-12 card" id="repBox">
+          <div class="muted">Klik “Tampilkan Ringkasan”.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal" id="mSettings">
+    <div class="panel">
+      <header>
+        <div class="brand">
+          <div class="logo">⚙</div>
+          <div>
+            <h1>Pengaturan</h1>
+            <small>GitHub Sync • AI Key • Mode Atasan</small>
+          </div>
+        </div>
+        <div class="topbtns">
+          <button class="btn" id="btnCloseSettings">Tutup</button>
+        </div>
+      </header>
+      <div style="padding:14px" class="grid">
+        <div class="col-6 card">
+          <b>GitHub Cloud (Contents API)</b>
+          <p class="muted small">Isi jika ingin sync. Jika kosong, aplikasi tetap jalan lokal/offline.</p>
+          <div class="grid">
+            <div class="col-12"><label>Owner</label><input id="ghOwner" placeholder="username" /></div>
+            <div class="col-12"><label>Repo</label><input id="ghRepo" placeholder="nama-repo" /></div>
+            <div class="col-12"><label>Path DB</label><input id="ghPath" placeholder="data/db_partner.json" /></div>
+            <div class="col-12"><label>Token</label><input id="ghToken" placeholder="ghp_..." type="password" /></div>
+          </div>
+        </div>
+
+        <div class="col-6 card">
+          <b>Mode Atasan (Read-only)</b>
+          <p class="muted small">Akses atasan: lihat dashboard + verifikasi WO. Tidak bisa edit/hapus.</p>
+          <div class="grid">
+            <div class="col-12"><label>PIN Admin</label><input id="pinAdmin" type="password" placeholder="set pin" /></div>
+            <div class="col-12"><label>PIN Atasan</label><input id="pinViewer" type="password" placeholder="set pin" /></div>
+            <div class="col-12"><label>Mode aktif</label>
+              <select id="modeRole">
+                <option value="admin">Admin (edit penuh)</option>
+                <option value="viewer">Atasan (read-only)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 card">
+          <b>Keamanan Minimal</b>
+          <ul class="muted small">
+            <li>Jangan pernah commit token/API key ke repo. Simpan hanya di perangkat (localStorage).</li>
+            <li>Jangan simpan kredensial perangkat IT (password). Hanya info non-kredensial.</li>
+            <li>Output AI (jika dipakai) wajib disajikan sebagai text aman (hindari HTML injection).</li>
+          </ul>
+        </div>
+
+        <div class="col-12 actions">
+          <button class="pbtn primary" id="btnSaveSettings">Simpan</button>
+          <button class="pbtn" id="btnClearLocal">Reset Data Lokal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSET MODAL -->
+  <div class="modal" id="mAsset">
+    <div class="panel">
+      <header>
+        <div class="brand"><div class="logo">A</div><div><h1>Data Aset</h1><small>Inventaris • Lokasi • PM</small></div></div>
+        <div class="topbtns"><button class="btn" id="btnCloseAsset">Tutup</button></div>
+      </header>
+      <form id="assetForm" style="padding:14px" class="grid">
+        <input type="hidden" id="assetId" />
+        <div class="col-6"><label>No Inventaris/BMN</label><input id="assetCode" placeholder="BMN/BNN/Inventaris" /></div>
+        <div class="col-6"><label>Serial</label><input id="assetSerial" placeholder="SN..." /></div>
+        <div class="col-6"><label>Jenis</label><select id="assetType"></select></div>
+        <div class="col-6"><label>Subjenis</label><input id="assetSubtype" placeholder="Split/Online/Managed..." /></div>
+        <div class="col-6"><label>Merk</label><input id="assetBrand" /></div>
+        <div class="col-6"><label>Model</label><input id="assetModel" /></div>
+
+        <div class="col-6"><label>Lokasi (Ruang)</label><select id="assetRoom"></select></div>
+        <div class="col-6"><label>Kritikalitas</label>
+          <select id="assetCrit">
+            <option>Rendah</option><option selected>Sedang</option><option>Tinggi</option>
+          </select>
+        </div>
+
+        <div class="col-6"><label>Kondisi</label>
+          <select id="assetCond">
+            <option>Normal</option><option>Perlu Servis</option><option>Rusak</option>
+          </select>
+        </div>
+        <div class="col-6"><label>Interval PM (hari)</label><input id="assetPM" type="number" min="0" placeholder="90" /></div>
+
+        <div class="col-6"><label>Tgl Pasang</label><input id="assetInstall" type="date" /></div>
+        <div class="col-6"><label>Servis Terakhir</label><input id="assetLast" type="date" /></div>
+
+        <div class="col-12"><label>Catatan/Issue</label><textarea id="assetIssue" rows="3" placeholder="Deskripsi kerusakan/temuan"></textarea></div>
+
+        <div class="col-12 actions">
+          <button type="submit" class="pbtn primary">Simpan</button>
+          <button type="button" class="pbtn danger" id="btnDeleteAsset">Hapus</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- WO MODAL -->
+  <div class="modal" id="mWO">
+    <div class="panel">
+      <header>
+        <div class="brand"><div class="logo">W</div><div><h1>Work Order</h1><small>Open → Progress → Done → Verified</small></div></div>
+        <div class="topbtns"><button class="btn" id="btnCloseWO">Tutup</button></div>
+      </header>
+      <form id="woForm" style="padding:14px" class="grid">
+        <input type="hidden" id="woId" />
+        <div class="col-6"><label>Tanggal</label><input id="woDate" type="date" /></div>
+        <div class="col-6"><label>Status</label>
+          <select id="woStatus"><option>Open</option><option>On Progress</option><option>Done</option><option>Verified</option></select>
+        </div>
+        <div class="col-6"><label>Prioritas</label>
+          <select id="woPrio"><option>Rendah</option><option selected>Sedang</option><option>Tinggi</option></select>
+        </div>
+        <div class="col-6"><label>Terkait Aset</label><select id="woAsset"></select></div>
+        <div class="col-6"><label>Lokasi (jika tanpa aset)</label><select id="woLoc"></select></div>
+        <div class="col-6"><label>Judul</label><input id="woTitle" placeholder="Singkat dan jelas" /></div>
+        <div class="col-12"><label>Temuan</label><textarea id="woFinding" rows="2"></textarea></div>
+        <div class="col-12"><label>Tindakan</label><textarea id="woAction" rows="2"></textarea></div>
+        <div class="col-12"><label>Hasil</label><textarea id="woResult" rows="2"></textarea></div>
+        <div class="col-12 actions">
+          <button type="submit" class="pbtn primary">Simpan</button>
+          <button type="button" class="pbtn" id="btnVerifyWO">Mark Verified</button>
+          <button type="button" class="pbtn danger" id="btnDeleteWO">Hapus</button>
+        </div>
+        <div class="col-12 card">
+          <b>Foto Before/After</b>
+          <p class="muted small">Versi MVP: belum menyimpan multi-foto. Akan ditambahkan di tahap berikutnya sesuai daftar fitur.</p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ACTIVITY MODAL -->
+  <div class="modal" id="mAct">
+    <div class="panel">
+      <header>
+        <div class="brand"><div class="logo">L</div><div><h1>Input Kegiatan</h1><small>Catat pekerjaan + bukti</small></div></div>
+        <div class="topbtns"><button class="btn" id="btnCloseAct">Tutup</button></div>
+      </header>
+      <form id="actForm" style="padding:14px" class="grid">
+        <input type="hidden" id="actId" />
+        <div class="col-6"><label>Tanggal</label><input id="actDate" type="date" /></div>
+        <div class="col-6"><label>Jam</label><input id="actTime" type="time" /></div>
+        <div class="col-6"><label>Kategori</label>
+          <select id="actTag"><option>Umum</option><option>IT</option><option>GA</option><option>Servis</option></select>
+        </div>
+        <div class="col-6"><label>Terkait WO</label><select id="actWO"></select></div>
+        <div class="col-12"><label>Judul</label><input id="actTitle" /></div>
+        <div class="col-12"><label>Deskripsi</label><textarea id="actDesc" rows="3"></textarea></div>
+        <div class="col-12 actions">
+          <button type="submit" class="pbtn primary">Simpan</button>
+          <button type="button" class="pbtn danger" id="btnDeleteAct">Hapus</button>
+        </div>
+        <div class="col-12 card">
+          <b>Before/After</b>
+          <p class="muted small">Versi MVP: foto belum diaktifkan. Akan ditambahkan sesuai fitur daftar (multi foto + kompres).</p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FINANCE MODAL -->
+  <div class="modal" id="mFin">
+    <div class="panel">
+      <header>
+        <div class="brand"><div class="logo">$</div><div><h1>Input Bon</h1><small>Kategori • Tautan WO/Aset</small></div></div>
+        <div class="topbtns"><button class="btn" id="btnCloseFin">Tutup</button></div>
+      </header>
+      <form id="finForm" style="padding:14px" class="grid">
+        <input type="hidden" id="finId" />
+        <div class="col-6"><label>Tanggal</label><input id="finDate" type="date" /></div>
+        <div class="col-6"><label>Kategori</label>
+          <select id="finCat"><option>Sparepart</option><option>Jasa</option><option>Transport</option><option>Lainnya</option></select>
+        </div>
+        <div class="col-6"><label>Item</label><input id="finItem" /></div>
+        <div class="col-6"><label>Biaya (Rp)</label><input id="finCost" type="number" min="0" /></div>
+        <div class="col-6"><label>Terkait WO</label><select id="finWO"></select></div>
+        <div class="col-6"><label>Terkait Aset</label><select id="finAsset"></select></div>
+        <div class="col-12"><label>No Nota (opsional)</label><input id="finNote" /></div>
+        <div class="col-12 actions">
+          <button type="submit" class="pbtn primary">Simpan</button>
+          <button type="button" class="pbtn danger" id="btnDeleteFin">Hapus</button>
+        </div>
+        <div class="col-12 card"><b>Nota Foto</b><p class="muted small">Versi MVP: foto nota belum diaktifkan (akan ditambahkan sesuai daftar).</p></div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./assets/app.js"></script>
+</body>
+</html>
