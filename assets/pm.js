@@ -1,5 +1,4 @@
 // assets/pm.js
-// Preventive maintenance helpers.
 
 export function addDays(dateStr, days) {
   if (!dateStr) return '';

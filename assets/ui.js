@@ -1,5 +1,5 @@
 // assets/ui.js
-import { state, saveLocal, fmtRp, uid } from './state.js';
+import { state, fmtRp } from './state.js';
 import { computeNextDue, overdueDays, priorityScore } from './pm.js';
 
 export function setNet(online) {
@@ -11,21 +11,20 @@ export function setNet(online) {
 
 export function switchTab(tab) {
   state.ui.tab = tab;
-  const tabs = document.querySelectorAll('nav button');
-  tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   ['assets','wo','activity','finance','reports'].forEach(t => {
     document.getElementById('view-' + t).classList.toggle('hide', t !== tab);
   });
 }
 
-// ---------- Locations helpers ----------
-function childrenOf(parentId, type) {
-  return state.db.locations.filter(x => x.parent === parentId && x.type === type);
+function firstThumb(urls){
+  const u = (urls && urls.length) ? urls[0] : '';
+  if (!u) return '';
+  return `<img src="${u}" style="width:100%;max-width:160px;height:90px;object-fit:cover;border-radius:12px;border:1px solid #e2e8f0;cursor:pointer" onclick="window.open('${u}','_blank')">`;
 }
 
-function byType(type) {
-  return state.db.locations.filter(x => x.type === type);
-}
+function childrenOf(parentId, type) { return state.db.locations.filter(x => x.parent === parentId && x.type === type); }
+function byType(type) { return state.db.locations.filter(x => x.type === type); }
 
 export function initLocationFilters() {
   const fSite = document.getElementById('fSite');
@@ -35,19 +34,10 @@ export function initLocationFilters() {
 
   const fill = (sel, items, includeAll=true) => {
     sel.innerHTML = '';
-    if (includeAll) {
-      const o = document.createElement('option');
-      o.value=''; o.textContent='Semua'; sel.appendChild(o);
-    }
-    items.forEach(it => {
-      const o = document.createElement('option');
-      o.value = it.id;
-      o.textContent = it.name;
-      sel.appendChild(o);
-    });
+    if (includeAll) { const o=document.createElement('option'); o.value=''; o.textContent='Semua'; sel.appendChild(o); }
+    items.forEach(it => { const o=document.createElement('option'); o.value=it.id; o.textContent=it.name; sel.appendChild(o); });
   };
 
-  // Sites
   fill(fSite, byType('site'));
   fill(fBuilding, []);
   fill(fFloor, []);
@@ -55,69 +45,40 @@ export function initLocationFilters() {
 
   fSite.onchange = () => {
     state.ui.filters.site = fSite.value;
-    state.ui.filters.building = '';
-    state.ui.filters.floor = '';
-    state.ui.filters.room = '';
+    state.ui.filters.building = ''; state.ui.filters.floor=''; state.ui.filters.room='';
     fill(fBuilding, fSite.value ? childrenOf(fSite.value,'building') : []);
-    fill(fFloor, []);
-    fill(fRoom, []);
+    fill(fFloor, []); fill(fRoom, []);
     renderAssets();
   };
-
   fBuilding.onchange = () => {
     state.ui.filters.building = fBuilding.value;
-    state.ui.filters.floor = '';
-    state.ui.filters.room = '';
+    state.ui.filters.floor=''; state.ui.filters.room='';
     fill(fFloor, fBuilding.value ? childrenOf(fBuilding.value,'floor') : []);
     fill(fRoom, []);
     renderAssets();
   };
-
   fFloor.onchange = () => {
     state.ui.filters.floor = fFloor.value;
-    state.ui.filters.room = '';
+    state.ui.filters.room='';
     fill(fRoom, fFloor.value ? childrenOf(fFloor.value,'room') : []);
     renderAssets();
   };
-
-  fRoom.onchange = () => {
-    state.ui.filters.room = fRoom.value;
-    renderAssets();
-  };
+  fRoom.onchange = () => { state.ui.filters.room = fRoom.value; renderAssets(); };
 }
 
 export function initTypeFilter() {
   const fType = document.getElementById('fType');
   fType.innerHTML = '<option value="">Semua</option>';
-  state.db.asset_types.forEach(t => {
-    const o = document.createElement('option');
-    o.value = t.id; o.textContent = t.name;
-    fType.appendChild(o);
-  });
-  fType.onchange = () => {
-    state.ui.filters.type = fType.value;
-    renderAssets();
-  };
+  state.db.asset_types.forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; fType.appendChild(o); });
+  fType.onchange = () => { state.ui.filters.type = fType.value; renderAssets(); };
 }
 
 export function initSearchAndCond() {
-  const q = document.getElementById('q');
-  q.oninput = () => {
-    state.ui.filters.q = q.value.toLowerCase();
-    state.ui.page = 1;
-    renderAssets();
-  };
-  document.getElementById('fCond').onchange = (e) => {
-    state.ui.filters.cond = e.target.value;
-    state.ui.page = 1;
-    renderAssets();
-  };
+  document.getElementById('q').oninput = (e) => { state.ui.filters.q = e.target.value.toLowerCase(); state.ui.page=1; renderAssets(); };
+  document.getElementById('fCond').onchange = (e) => { state.ui.filters.cond = e.target.value; state.ui.page=1; renderAssets(); };
 }
 
-function locName(id) {
-  const x = state.db.locations.find(a=>a.id===id);
-  return x ? x.name : '-';
-}
+function locName(id) { const x=state.db.locations.find(a=>a.id===id); return x?x.name:'-'; }
 
 function fullLocation(roomId) {
   const room = state.db.locations.find(x=>x.id===roomId);
@@ -131,18 +92,13 @@ function fullLocation(roomId) {
 export function renderAssets() {
   const list = document.getElementById('assetList');
   const empty = document.getElementById('emptyAssets');
-
   const today = new Date().toISOString().slice(0,10);
 
-  // Compute derived fields on the fly
-  state.db.assets.forEach(a => {
-    a.next_due = a.next_due || computeNextDue(a.last_service, a.pm_interval_days);
-  });
+  state.db.assets.forEach(a => { a.next_due = a.next_due || computeNextDue(a.last_service, a.pm_interval_days); });
 
   const f = state.ui.filters;
   let items = [...state.db.assets];
 
-  // Location filter: room, floor, building, site
   if (f.room) items = items.filter(a => a.location_id === f.room);
   else if (f.floor) {
     const rooms = state.db.locations.filter(x => x.parent === f.floor && x.type==='room').map(x=>x.id);
@@ -164,21 +120,17 @@ export function renderAssets() {
   if (f.q) {
     const term = f.q;
     items = items.filter(a => {
-      const hay = [a.asset_code,a.brand,a.model,a.serial, a.subtype, fullLocation(a.location_id), a.issue].join(' ').toLowerCase();
+      const hay = [a.asset_code,a.brand,a.model,a.serial,a.subtype,fullLocation(a.location_id),a.issue].join(' ').toLowerCase();
       return hay.includes(term);
     });
   }
 
-  // Sort by priority score desc
   items.sort((a,b) => priorityScore(b,today) - priorityScore(a,today));
 
-  // KPIs
   document.getElementById('kTotal').textContent = state.db.assets.length;
-  const over = state.db.assets.filter(a => overdueDays(a.next_due, today) > 0).length;
-  document.getElementById('kOver').textContent = over;
+  document.getElementById('kOver').textContent = state.db.assets.filter(a => overdueDays(a.next_due,today)>0).length;
   document.getElementById('kBad').textContent = state.db.assets.filter(a => a.cond==='Rusak').length;
 
-  // Paging
   const pageSize = state.ui.pageSize;
   const maxPage = Math.max(1, Math.ceil(items.length / pageSize));
   state.ui.page = Math.min(state.ui.page, maxPage);
@@ -186,9 +138,7 @@ export function renderAssets() {
   const pageItems = items.slice(start, start+pageSize);
   document.getElementById('pageInfo').textContent = `${state.ui.page} / ${maxPage}`;
 
-  if (state.db.assets.length === 0) {
-    empty.classList.remove('hide');
-  } else empty.classList.add('hide');
+  empty.classList.toggle('hide', state.db.assets.length !== 0);
 
   list.innerHTML = pageItems.map(a => {
     const od = overdueDays(a.next_due, today);
@@ -214,20 +164,15 @@ export function renderAssets() {
     `;
   }).join('');
 
-  // Bind actions
-  list.querySelectorAll('[data-edit-asset]').forEach(btn => {
-    btn.onclick = () => window.appOpenAsset(btn.dataset.editAsset);
-  });
-  list.querySelectorAll('[data-wo-asset]').forEach(btn => {
-    btn.onclick = () => window.appOpenWO(null, btn.dataset.woAsset);
-  });
+  list.querySelectorAll('[data-edit-asset]').forEach(btn => btn.onclick = () => window.appOpenAsset(btn.dataset.editAsset));
+  list.querySelectorAll('[data-wo-asset]').forEach(btn => btn.onclick = () => window.appOpenWO(null, btn.dataset.woAsset));
 }
 
 export function renderWO() {
   const list = document.getElementById('woList');
   const empty = document.getElementById('emptyWO');
   const items = [...state.db.work_orders];
-  if (items.length===0) empty.classList.remove('hide'); else empty.classList.add('hide');
+  empty.classList.toggle('hide', items.length !== 0);
 
   const assetMap = new Map(state.db.assets.map(a=>[a.id,a]));
 
@@ -235,6 +180,8 @@ export function renderWO() {
     const badge = w.status==='Verified' ? 'b-ok' : w.status==='Done' ? 'b-info' : w.status==='On Progress' ? 'b-warn' : 'b-bad';
     const a = w.asset_id ? assetMap.get(w.asset_id) : null;
     const loc = a ? fullLocation(a.location_id) : (w.location_id ? locName(w.location_id) : '-');
+    const beforeThumb = firstThumb(w.photos?.before);
+    const afterThumb = firstThumb(w.photos?.after);
     return `
       <div class="item">
         <div class="row" style="justify-content:space-between; align-items:flex-start">
@@ -247,48 +194,43 @@ export function renderWO() {
             <div class="muted small"><b>Tindakan:</b> ${escapeHtml(w.action||'-')}</div>
             <div class="muted small"><b>Hasil:</b> ${escapeHtml(w.result||'-')}</div>
             ${w.verified_at?`<div class="muted small">Verified: ${escapeHtml(w.verified_by||'Atasan')} • ${new Date(w.verified_at).toLocaleString('id-ID')}</div>`:''}
+            ${(beforeThumb||afterThumb)?`<div class="row" style="margin-top:10px; gap:10px"><div style="min-width:160px">${beforeThumb}</div><div style="min-width:160px">${afterThumb}</div></div>`:''}
           </div>
-          <div class="actions">
-            <button class="pbtn" data-edit-wo="${w.id}">Edit</button>
-          </div>
+          <div class="actions"><button class="pbtn" data-edit-wo="${w.id}">Edit</button></div>
         </div>
       </div>
     `;
   }).join('');
 
-  list.querySelectorAll('[data-edit-wo]').forEach(btn => {
-    btn.onclick = () => window.appOpenWO(btn.dataset.editWo);
-  });
+  list.querySelectorAll('[data-edit-wo]').forEach(btn => btn.onclick = () => window.appOpenWO(btn.dataset.editWo));
 }
 
 export function renderActivities() {
   const list = document.getElementById('actList');
   const empty = document.getElementById('emptyAct');
   const items = [...state.db.activities];
-  if (items.length===0) empty.classList.remove('hide'); else empty.classList.add('hide');
+  empty.classList.toggle('hide', items.length !== 0);
+
   list.innerHTML = items.map(a => `
     <div class="item">
       <div class="badge b-info">${escapeHtml(a.tag||'Umum')}</div>
       <div style="font-weight:1000; font-size:16px; margin-top:8px">${escapeHtml(a.title||'(Tanpa judul)')}</div>
       <div class="muted">${a.date} • ${a.time||''} • WO: ${escapeHtml(a.wo_id||'-')}</div>
       <div class="muted small" style="margin-top:8px">${escapeHtml(a.desc||'')}</div>
-      <div class="actions" style="margin-top:10px">
-        <button class="pbtn" data-edit-act="${a.id}">Edit</button>
-      </div>
+      ${(a.photos?.before?.length||a.photos?.after?.length)?`<div class="row" style="margin-top:10px; gap:10px"><div style="min-width:160px">${firstThumb(a.photos?.before)}</div><div style="min-width:160px">${firstThumb(a.photos?.after)}</div></div>`:''}
+      <div class="actions" style="margin-top:10px"><button class="pbtn" data-edit-act="${a.id}">Edit</button></div>
     </div>
   `).join('');
-  list.querySelectorAll('[data-edit-act]').forEach(btn => {
-    btn.onclick = () => window.appOpenAct(btn.dataset.editAct);
-  });
+
+  list.querySelectorAll('[data-edit-act]').forEach(btn => btn.onclick = () => window.appOpenAct(btn.dataset.editAct));
 }
 
 export function renderFinance() {
   const list = document.getElementById('finList');
   const empty = document.getElementById('emptyFin');
   const items = [...state.db.finances];
-  if (items.length===0) empty.classList.remove('hide'); else empty.classList.add('hide');
-  const total = items.reduce((acc,x)=>acc+(Number(x.cost)||0),0);
-  document.getElementById('finTotal').textContent = fmtRp(total);
+  empty.classList.toggle('hide', items.length !== 0);
+  document.getElementById('finTotal').textContent = fmtRp(items.reduce((acc,x)=>acc+(Number(x.cost)||0),0));
 
   list.innerHTML = items.map(f => `
     <div class="item">
@@ -296,26 +238,21 @@ export function renderFinance() {
       <div style="font-weight:1000; font-size:16px; margin-top:8px">${escapeHtml(f.item||'(Tanpa item)')}</div>
       <div class="muted">${f.date} • ${fmtRp(f.cost)}</div>
       <div class="muted small">WO: ${escapeHtml(f.wo_id||'-')} • Aset: ${escapeHtml(f.asset_id||'-')} • Nota: ${escapeHtml(f.note_no||'-')}</div>
-      <div class="actions" style="margin-top:10px">
-        <button class="pbtn" data-edit-fin="${f.id}">Edit</button>
-      </div>
+      ${f.receipts?.length?`<div style="margin-top:10px">${firstThumb(f.receipts)}</div>`:''}
+      <div class="actions" style="margin-top:10px"><button class="pbtn" data-edit-fin="${f.id}">Edit</button></div>
     </div>
   `).join('');
 
-  list.querySelectorAll('[data-edit-fin]').forEach(btn => {
-    btn.onclick = () => window.appOpenFin(btn.dataset.editFin);
-  });
+  list.querySelectorAll('[data-edit-fin]').forEach(btn => btn.onclick = () => window.appOpenFin(btn.dataset.editFin));
 }
 
 export function renderReportSummary(start, end) {
   const box = document.getElementById('repBox');
   const s = start || document.getElementById('repStart').value;
   const e = end || document.getElementById('repEnd').value;
-
   const inRange = (d) => d >= s && d <= e;
 
   const wo = state.db.work_orders.filter(x => x.date && inRange(x.date));
-  const act = state.db.activities.filter(x => x.date && inRange(x.date));
   const fin = state.db.finances.filter(x => x.date && inRange(x.date));
 
   const done = wo.filter(x => x.status==='Done' || x.status==='Verified').length;
@@ -333,7 +270,6 @@ export function renderReportSummary(start, end) {
     </div>
     <hr style="border:none;border-top:1px solid var(--line); margin:12px 0">
     <div class="muted">Periode: <b>${s}</b> s/d <b>${e}</b></div>
-    <div class="muted small" style="margin-top:8px">Detail WO: ${wo.slice(0,20).map(x=>`<div>• ${escapeHtml(x.date)} — <b>${escapeHtml(x.title||'-')}</b> (${escapeHtml(x.status)})</div>`).join('')}${wo.length>20?`<div class="muted">…${wo.length-20} WO lainnya</div>`:''}</div>
   `;
 }
 
@@ -343,8 +279,7 @@ export function escapeHtml(s){
 
 export function setRoleUI() {
   const viewer = state.config.role === 'viewer';
-  // Hide edit buttons in viewer mode
-  document.querySelectorAll('.no-print .pbtn.primary, #btnAddAsset, #btnAddWO, #btnAddAct, #btnAddFin').forEach(el=>{
+  document.querySelectorAll('#btnAddAsset,#btnAddWO,#btnAddAct,#btnAddFin,#btnLocations').forEach(el=>{
     el.style.display = viewer ? 'none' : '';
   });
 }

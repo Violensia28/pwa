@@ -16,7 +16,6 @@ export async function githubPull() {
   const url = `https://api.github.com/repos/${gh_owner}/${gh_repo}/contents/${gh_path}`;
   const res = await fetch(url, { headers: { 'Authorization': `token ${gh_token}` } });
   if (res.status === 404) {
-    // init empty db
     await githubPush('Init DB');
     return;
   }
@@ -32,26 +31,15 @@ export async function githubPush(message='Update DB') {
   const { gh_owner, gh_repo, gh_path, gh_token } = state.config;
   if (!gh_owner || !gh_repo || !gh_token) throw new Error('GitHub config belum lengkap');
   const url = `https://api.github.com/repos/${gh_owner}/${gh_repo}/contents/${gh_path}`;
-  const body = {
-    message,
-    content: b64Enc(JSON.stringify(state.db, null, 0)),
-    sha: state.sha || undefined
-  };
+  const body = { message, content: b64Enc(JSON.stringify(state.db)), sha: state.sha || undefined };
   const res = await fetch(url, {
     method: 'PUT',
-    headers: {
-      'Authorization': `token ${gh_token}`,
-      'Content-Type': 'application/json'
-    },
+    headers: { 'Authorization': `token ${gh_token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
   const data = await res.json().catch(()=> ({}));
-  if (!res.ok) {
-    const msg = data && data.message ? data.message : `status ${res.status}`;
-    throw new Error(`GitHub push gagal: ${msg}`);
-  }
-  // IMPORTANT: update sha from response to avoid sha mismatch
-  if (data && data.content && data.content.sha) state.sha = data.content.sha;
+  if (!res.ok) throw new Error(`GitHub push gagal: ${data.message || res.status}`);
+  if (data?.content?.sha) state.sha = data.content.sha; // update sha to avoid mismatch
 }
 
 export function exportBackup() {
@@ -67,10 +55,6 @@ export function exportBackup() {
 export async function importBackup(file, mode='merge') {
   const text = await file.text();
   const incoming = JSON.parse(text);
-  if (mode === 'replace') state.db = incoming;
-  else {
-    // merge shallow
-    state.db = { ...state.db, ...incoming };
-  }
+  state.db = (mode === 'replace') ? incoming : { ...state.db, ...incoming };
   saveLocal();
 }

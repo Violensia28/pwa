@@ -1,15 +1,8 @@
 // assets/qr.js
-// QR module MVP: scanning via BarcodeDetector when available; otherwise manual.
+// MVP: scan is manual input/paste. Full camera scan can be added later.
 
 export async function scanQRCode() {
-  // Minimal flow: if BarcodeDetector exists, attempt camera scan; else prompt.
-  if ('BarcodeDetector' in window) {
-    // A full camera scanner UI is non-trivial without extra UI.
-    // MVP: prompt for code; user can paste value from external scanner.
-    const val = prompt('Scan QR belum diaktifkan penuh. Tempel/ketik isi QR di sini:');
-    return (val || '').trim();
-  }
-  const val = prompt('Browser tidak mendukung scanner. Tempel/ketik isi QR:');
+  const val = prompt('Tempel/ketik isi QR di sini (MVP):');
   return (val || '').trim();
 }
 

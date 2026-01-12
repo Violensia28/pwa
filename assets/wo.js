@@ -27,7 +27,9 @@ export function newWO() {
     action: '',
     result: '',
     verified_by: '',
-    verified_at: ''
+    verified_at: '',
+    photos: { before: [], after: [] },
+    checklist: []
   };
 }
 

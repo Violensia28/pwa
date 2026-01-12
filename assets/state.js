@@ -6,23 +6,21 @@ export const SCHEMA_VERSION = 1;
 export const defaults = {
   config: {
     gh_owner: localStorage.getItem('gh_owner') || '',
-    gh_repo: localStorage.getItem('gh_repo') || '',
+    gh_repo: localStorage.getItem('gh_repo') || 'pwa',
     gh_path: localStorage.getItem('gh_path') || 'data/db_partner.json',
     gh_token: localStorage.getItem('gh_token') || '',
-    // viewer/admin PINs
     pin_admin: localStorage.getItem('pin_admin') || '',
     pin_viewer: localStorage.getItem('pin_viewer') || '',
-    role: localStorage.getItem('role') || 'admin' // admin|viewer
+    role: localStorage.getItem('role') || 'admin'
   },
   sha: null,
   db: {
     meta: {
       schema: SCHEMA_VERSION,
-      org_name: 'Unit/Instansi',
+      org_name: '',
       doc_prefix: 'OPS-LOG',
       last_doc_no: 0
     },
-    // Location tree stored as flat nodes (id, type, parent, name)
     locations: [
       { id: 'site-kantor', type: 'site', parent: null, name: 'Kantor' },
       { id: 'site-stui', type: 'site', parent: null, name: 'Rumah Dinas Stui' },
@@ -56,15 +54,7 @@ export const state = {
     tab: 'assets',
     page: 1,
     pageSize: 24,
-    filters: {
-      q: '',
-      site: '',
-      building: '',
-      floor: '',
-      room: '',
-      type: '',
-      cond: ''
-    }
+    filters: { q:'', site:'', building:'', floor:'', room:'', type:'', cond:'' }
   }
 };
 
@@ -75,9 +65,7 @@ export function loadLocal() {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return;
     const parsed = JSON.parse(raw);
-    if (parsed && parsed.meta) {
-      state.db = parsed;
-    }
+    if (parsed && parsed.meta) state.db = parsed;
   } catch (e) {
     console.warn('loadLocal failed', e);
   }
@@ -93,7 +81,7 @@ export function saveLocal() {
 
 export function saveConfig() {
   localStorage.setItem('gh_owner', state.config.gh_owner || '');
-  localStorage.setItem('gh_repo', state.config.gh_repo || '');
+  localStorage.setItem('gh_repo', state.config.gh_repo || 'pwa');
   localStorage.setItem('gh_path', state.config.gh_path || 'data/db_partner.json');
   localStorage.setItem('gh_token', state.config.gh_token || '');
   localStorage.setItem('pin_admin', state.config.pin_admin || '');

@@ -5,56 +5,59 @@ import { switchTab, setNet, initLocationFilters, initTypeFilter, initSearchAndCo
 import { newWO, upsertWO, deleteWO, markVerified } from './wo.js';
 import { scanQRCode, parseQRPayload } from './qr.js';
 import { computeNextDue } from './pm.js';
+import { compressMany, renderThumbs } from './media.js';
 
-// ---------- PWA: register service worker ----------
+// Register service worker (HTTPS required; OK on GitHub Pages)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
-    try {
-      await navigator.serviceWorker.register('./sw.js', { scope: './' });
-    } catch (e) {
-      console.warn('SW register failed', e);
-    }
+    try { await navigator.serviceWorker.register('./sw.js', { scope: './' }); }
+    catch (e) { console.warn('SW register failed', e); }
   });
 }
 
-// ---------- Basic navigation ----------
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    switchTab(btn.dataset.tab);
-  });
-});
+// Navigation
+for (const btn of document.querySelectorAll('nav button')) {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+}
 
-// ---------- Online/offline indicator ----------
+// Online/offline indicator
 function netUpdate(){ setNet(navigator.onLine); }
 window.addEventListener('online', netUpdate);
 window.addEventListener('offline', netUpdate);
 netUpdate();
 
-// ---------- Load local DB ----------
+// Load local DB
 loadLocal();
 
-// ---------- Init filters ----------
+// Photo preview bindings
+function bindPhotoPreviews(){
+  const woBefore = document.getElementById('woBefore');
+  const woAfter = document.getElementById('woAfter');
+  const actBefore = document.getElementById('actBefore');
+  const actAfter = document.getElementById('actAfter');
+  const finReceipt = document.getElementById('finReceipt');
+
+  woBefore.onchange = async () => renderThumbs(document.getElementById('woBeforePrev'), await compressMany(woBefore.files));
+  woAfter.onchange = async () => renderThumbs(document.getElementById('woAfterPrev'), await compressMany(woAfter.files));
+  actBefore.onchange = async () => renderThumbs(document.getElementById('actBeforePrev'), await compressMany(actBefore.files));
+  actAfter.onchange = async () => renderThumbs(document.getElementById('actAfterPrev'), await compressMany(actAfter.files));
+  finReceipt.onchange = async () => renderThumbs(document.getElementById('finReceiptPrev'), await compressMany(finReceipt.files));
+}
+bindPhotoPreviews();
+
+// Init filters
 initLocationFilters();
 initTypeFilter();
 initSearchAndCond();
 
-// ---------- Paging buttons ----------
+// Paging
 document.getElementById('prevPage').onclick = () => { state.ui.page = Math.max(1, state.ui.page-1); renderAssets(); };
 document.getElementById('nextPage').onclick = () => { state.ui.page = state.ui.page+1; renderAssets(); };
 
-// ---------- Buttons ----------
+// Buttons
 document.getElementById('btnSettings').onclick = () => openSettings();
 document.getElementById('btnCloseSettings').onclick = () => closeModal('mSettings');
 document.getElementById('btnSync').onclick = () => syncNow();
-
-// Backup/restore
-const filePick = (accept) => new Promise((resolve)=>{
-  const inp = document.createElement('input');
-  inp.type='file'; inp.accept=accept;
-  inp.onchange = () => resolve(inp.files[0] || null);
-  inp.click();
-});
-
 document.getElementById('btnBackup').onclick = () => exportBackup();
 document.getElementById('btnRestore').onclick = async () => {
   const f = await filePick('application/json');
@@ -64,19 +67,19 @@ document.getElementById('btnRestore').onclick = async () => {
   refreshAll();
 };
 
+// QR scan
 document.getElementById('btnScan').onclick = async () => {
   const text = await scanQRCode();
   if (!text) return;
   const p = parseQRPayload(text);
-  if (p.kind==='asset') {
-    openAsset(p.id);
-  } else if (p.kind==='location') {
-    // filter to location
-    alert('QR lokasi terdeteksi. Silakan pilih filter ruang sesuai lokasi (fitur detail lokasi akan disempurnakan).');
-  } else {
-    alert('QR tidak dikenali: ' + text);
-  }
+  if (p.kind==='asset') openAsset(p.id);
+  else alert('QR tidak dikenali/MVP: ' + text);
 };
+
+// Locations
+document.getElementById('btnLocations').onclick = () => openLocations();
+document.getElementById('btnCloseLoc').onclick = () => closeModal('mLoc');
+document.getElementById('btnAddLoc').onclick = (e) => { e.preventDefault(); addLocation(); };
 
 // Assets
 window.appOpenAsset = (id) => openAsset(id);
@@ -119,13 +122,20 @@ document.getElementById('btnPDFFormal').onclick = () => alert('PDF formal akan d
 
 document.getElementById('btnSaveSettings').onclick = () => {
   state.config.gh_owner = document.getElementById('ghOwner').value.trim();
-  state.config.gh_repo = document.getElementById('ghRepo').value.trim();
+  state.config.gh_repo = document.getElementById('ghRepo').value.trim() || 'pwa';
   state.config.gh_path = document.getElementById('ghPath').value.trim() || 'data/db_partner.json';
   state.config.gh_token = document.getElementById('ghToken').value.trim();
   state.config.pin_admin = document.getElementById('pinAdmin').value.trim();
   state.config.pin_viewer = document.getElementById('pinViewer').value.trim();
   state.config.role = document.getElementById('modeRole').value;
+
+  // report template (editable; can be blank)
+  state.db.meta = state.db.meta || {};
+  state.db.meta.org_name = document.getElementById('orgName').value.trim();
+  state.db.meta.doc_prefix = document.getElementById('docPrefix').value.trim() || 'OPS-LOG';
+  saveLocal();
   saveConfig();
+
   closeModal('mSettings');
   setRoleUI();
 };
@@ -136,19 +146,21 @@ document.getElementById('btnClearLocal').onclick = () => {
   refreshAll();
 };
 
-function openSettings(){
-  document.getElementById('ghOwner').value = state.config.gh_owner;
-  document.getElementById('ghRepo').value = state.config.gh_repo;
-  document.getElementById('ghPath').value = state.config.gh_path;
-  document.getElementById('ghToken').value = state.config.gh_token;
-  document.getElementById('pinAdmin').value = state.config.pin_admin;
-  document.getElementById('pinViewer').value = state.config.pin_viewer;
-  document.getElementById('modeRole').value = state.config.role;
-  openModal('mSettings');
+// helpers
+function filePick(accept) {
+  return new Promise((resolve)=>{
+    const inp = document.createElement('input');
+    inp.type='file'; inp.accept=accept;
+    inp.onchange = () => resolve(inp.files[0] || null);
+    inp.click();
+  });
 }
 
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
+}
 
 async function syncNow(){
   try {
@@ -171,17 +183,106 @@ function refreshAll(){
   refreshWOAssetOptions();
   refreshActWOOptions();
   refreshFinOptions();
+  initLocationFilters();
+  initTypeFilter();
+}
+
+function openSettings(){
+  document.getElementById('ghOwner').value = state.config.gh_owner;
+  document.getElementById('ghRepo').value = state.config.gh_repo || 'pwa';
+  document.getElementById('ghPath').value = state.config.gh_path;
+  document.getElementById('ghToken').value = state.config.gh_token;
+  document.getElementById('pinAdmin').value = state.config.pin_admin;
+  document.getElementById('pinViewer').value = state.config.pin_viewer;
+  document.getElementById('modeRole').value = state.config.role;
+  document.getElementById('orgName').value = state.db.meta?.org_name || '';
+  document.getElementById('docPrefix').value = state.db.meta?.doc_prefix || 'OPS-LOG';
+  openModal('mSettings');
+}
+
+// ---------- Locations Manager ----------
+function openLocations(){
+  fillLocParent();
+  document.getElementById('locType').onchange = () => fillLocParent();
+  renderLocList();
+  openModal('mLoc');
+}
+
+function fillLocParent(){
+  const parentSel = document.getElementById('locParent');
+  const type = document.getElementById('locType').value;
+  parentSel.innerHTML = '';
+  const addOpt = (id, text) => {
+    const o = document.createElement('option');
+    o.value = id; o.textContent = text;
+    parentSel.appendChild(o);
+  };
+
+  if (type === 'building') {
+    state.db.locations.filter(x=>x.type==='site').forEach(s => addOpt(s.id, `SITE: ${s.name}`));
+  } else if (type === 'floor') {
+    state.db.locations.filter(x=>x.type==='building').forEach(b => {
+      const site = state.db.locations.find(x=>x.id===b.parent);
+      addOpt(b.id, `GEDUNG: ${b.name} (${site?site.name:'-'})`);
+    });
+  } else {
+    state.db.locations.filter(x=>x.type==='floor').forEach(f => {
+      const b = state.db.locations.find(x=>x.id===f.parent);
+      const s = b ? state.db.locations.find(x=>x.id===b.parent) : null;
+      addOpt(f.id, `LANTAI: ${f.name} (${[s?.name,b?.name].filter(Boolean).join(' / ')})`);
+    });
+  }
+}
+
+function addLocation(){
+  if (state.config.role === 'viewer') return alert('Mode atasan: tidak bisa edit lokasi.');
+  const type = document.getElementById('locType').value;
+  const parent = document.getElementById('locParent').value;
+  const name = document.getElementById('locName').value.trim();
+  if (!parent) return alert('Parent wajib dipilih.');
+  if (!name) return alert('Nama lokasi wajib diisi.');
+
+  state.db.locations.push({ id: uid('loc'), type, parent, name });
+  document.getElementById('locName').value = '';
+  saveLocal();
+  renderLocList();
+  refreshAll();
+}
+
+function renderLocList(){
+  const box = document.getElementById('locList');
+  box.innerHTML = '';
+  const order = {site:1, building:2, floor:3, room:4};
+  const locs = [...state.db.locations].sort((a,b) => (order[a.type]-order[b.type]) || a.name.localeCompare(b.name));
+
+  locs.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.style.gridColumn = 'span 12';
+    div.style.cursor = 'pointer';
+    div.innerHTML = `<b>${l.type.toUpperCase()}</b> — ${escapeHtml(l.name)}<div class="muted small">id: ${escapeHtml(l.id)} • parent: ${escapeHtml(l.parent||'-')}</div>`;
+    div.onclick = () => {
+      if (l.type === 'site') return alert('Site default tidak disarankan dihapus.');
+      if (state.config.role === 'viewer') return alert('Mode atasan: tidak bisa hapus.');
+      const hasChild = state.db.locations.some(x => x.parent === l.id);
+      const usedByAsset = state.db.assets.some(a => a.location_id === l.id);
+      if (hasChild) return alert('Tidak bisa hapus: masih ada child location.');
+      if (usedByAsset) return alert('Tidak bisa hapus: masih dipakai oleh aset.');
+      if (!confirm(`Hapus lokasi: ${l.name}?`)) return;
+      state.db.locations = state.db.locations.filter(x => x.id !== l.id);
+      saveLocal();
+      renderLocList();
+      refreshAll();
+    };
+    box.appendChild(div);
+  });
 }
 
 // ---------- Assets CRUD ----------
 function refreshAssetTypeOptions(){
   const sel = document.getElementById('assetType');
   sel.innerHTML='';
-  state.db.asset_types.forEach(t=>{
-    const o=document.createElement('option');
-    o.value=t.id; o.textContent=t.name;
-    sel.appendChild(o);
-  });
+  state.db.asset_types.forEach(t => { const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; sel.appendChild(o); });
 }
 
 function refreshRoomOptions(){
@@ -189,14 +290,11 @@ function refreshRoomOptions(){
   sel.innerHTML='';
   const rooms = state.db.locations.filter(x=>x.type==='room');
   if (rooms.length===0) {
-    const o=document.createElement('option'); o.value=''; o.textContent='(Buat ruang dulu di data locations)';
+    const o=document.createElement('option'); o.value=''; o.textContent='(Buat ruang dulu di Kelola Lokasi)';
     sel.appendChild(o);
     return;
   }
-  rooms.forEach(r=>{
-    const o=document.createElement('option'); o.value=r.id; o.textContent=r.name;
-    sel.appendChild(o);
-  });
+  rooms.forEach(r => { const o=document.createElement('option'); o.value=r.id; o.textContent=r.name; sel.appendChild(o); });
 }
 
 function openAsset(id){
@@ -269,7 +367,7 @@ function deleteAsset(){
 function refreshWOAssetOptions(){
   const sel = document.getElementById('woAsset');
   sel.innerHTML = '<option value="">(Tidak terkait aset)</option>';
-  state.db.assets.slice(0,800).forEach(a=>{
+  state.db.assets.slice(0,1200).forEach(a => {
     const o=document.createElement('option');
     o.value=a.id;
     o.textContent=`${a.asset_code||a.id} — ${a.type} — ${a.brand||''} ${a.model||''}`.trim();
@@ -277,7 +375,7 @@ function refreshWOAssetOptions(){
   });
   const loc = document.getElementById('woLoc');
   loc.innerHTML = '<option value="">(Pilih lokasi)</option>';
-  state.db.locations.filter(x=>x.type==='room').forEach(r=>{
+  state.db.locations.filter(x=>x.type==='room').forEach(r => {
     const o=document.createElement('option'); o.value=r.id; o.textContent=r.name; loc.appendChild(o);
   });
 }
@@ -297,10 +395,16 @@ function openWO(id, assetId=null){
   document.getElementById('woFinding').value = w.finding || '';
   document.getElementById('woAction').value = w.action || '';
   document.getElementById('woResult').value = w.result || '';
+
+  document.getElementById('woBefore').value = '';
+  document.getElementById('woAfter').value = '';
+  renderThumbs(document.getElementById('woBeforePrev'), w.photos?.before || []);
+  renderThumbs(document.getElementById('woAfterPrev'), w.photos?.after || []);
+
   openModal('mWO');
 }
 
-function saveWO(e){
+async function saveWO(e){
   e.preventDefault();
   if (state.config.role === 'viewer') return alert('Mode atasan: tidak bisa edit WO.');
 
@@ -316,6 +420,11 @@ function saveWO(e){
   w.finding = document.getElementById('woFinding').value.trim();
   w.action = document.getElementById('woAction').value.trim();
   w.result = document.getElementById('woResult').value.trim();
+
+  const beforeFiles = document.getElementById('woBefore').files;
+  const afterFiles = document.getElementById('woAfter').files;
+  if (beforeFiles && beforeFiles.length) w.photos.before = await compressMany(beforeFiles);
+  if (afterFiles && afterFiles.length) w.photos.after = await compressMany(afterFiles);
 
   upsertWO(w);
   closeModal('mWO');
@@ -336,7 +445,6 @@ function verifyCurrentWO(){
   const id = document.getElementById('woId').value;
   const w = state.db.work_orders.find(x=>x.id===id);
   if (!w) return;
-  // viewer can verify
   const who = state.config.role === 'viewer' ? 'Atasan' : 'Admin';
   markVerified(w, who);
   closeModal('mWO');
@@ -347,7 +455,7 @@ function verifyCurrentWO(){
 function refreshActWOOptions(){
   const sel = document.getElementById('actWO');
   sel.innerHTML = '<option value="">(Tidak terkait WO)</option>';
-  state.db.work_orders.slice(0,800).forEach(w=>{
+  state.db.work_orders.slice(0,1200).forEach(w => {
     const o=document.createElement('option'); o.value=w.id; o.textContent=`${w.id} — ${w.title||'-'}`;
     sel.appendChild(o);
   });
@@ -355,16 +463,11 @@ function refreshActWOOptions(){
 
 function openAct(id){
   refreshActWOOptions();
-  const today = new Date().toISOString().slice(0,10);
   const now = new Date();
+  const today = now.toISOString().slice(0,10);
   const a = id ? state.db.activities.find(x=>x.id===id) : {
-    id: uid('ACT'),
-    date: today,
-    time: now.toTimeString().slice(0,5),
-    tag: 'Umum',
-    wo_id: '',
-    title: '',
-    desc: ''
+    id: uid('ACT'), date: today, time: now.toTimeString().slice(0,5), tag: 'Umum', wo_id: '', title: '', desc: '',
+    photos: { before: [], after: [] }
   };
   document.getElementById('actId').value = a.id;
   document.getElementById('actDate').value = a.date;
@@ -373,12 +476,19 @@ function openAct(id){
   document.getElementById('actWO').value = a.wo_id || '';
   document.getElementById('actTitle').value = a.title;
   document.getElementById('actDesc').value = a.desc;
+
+  document.getElementById('actBefore').value='';
+  document.getElementById('actAfter').value='';
+  renderThumbs(document.getElementById('actBeforePrev'), a.photos?.before || []);
+  renderThumbs(document.getElementById('actAfterPrev'), a.photos?.after || []);
+
   openModal('mAct');
 }
 
-function saveAct(e){
+async function saveAct(e){
   e.preventDefault();
   if (state.config.role === 'viewer') return alert('Mode atasan: tidak bisa edit.');
+
   const id = document.getElementById('actId').value;
   const item = {
     id,
@@ -387,8 +497,15 @@ function saveAct(e){
     tag: document.getElementById('actTag').value,
     wo_id: document.getElementById('actWO').value,
     title: document.getElementById('actTitle').value.trim(),
-    desc: document.getElementById('actDesc').value.trim()
+    desc: document.getElementById('actDesc').value.trim(),
+    photos: { before: [], after: [] }
   };
+
+  const bFiles = document.getElementById('actBefore').files;
+  const aFiles = document.getElementById('actAfter').files;
+  if (bFiles && bFiles.length) item.photos.before = await compressMany(bFiles);
+  if (aFiles && aFiles.length) item.photos.after = await compressMany(aFiles);
+
   const idx = state.db.activities.findIndex(x=>x.id===id);
   if (idx>=0) state.db.activities[idx]=item; else state.db.activities.unshift(item);
   saveLocal();
@@ -411,13 +528,13 @@ function deleteCurrentAct(){
 function refreshFinOptions(){
   const wo = document.getElementById('finWO');
   wo.innerHTML = '<option value="">(Tidak terkait WO)</option>';
-  state.db.work_orders.slice(0,800).forEach(w=>{
+  state.db.work_orders.slice(0,1200).forEach(w => {
     const o=document.createElement('option'); o.value=w.id; o.textContent=`${w.id} — ${w.title||'-'}`;
     wo.appendChild(o);
   });
   const as = document.getElementById('finAsset');
   as.innerHTML = '<option value="">(Tidak terkait aset)</option>';
-  state.db.assets.slice(0,800).forEach(a=>{
+  state.db.assets.slice(0,1200).forEach(a => {
     const o=document.createElement('option'); o.value=a.id; o.textContent=`${a.asset_code||a.id} — ${a.type}`;
     as.appendChild(o);
   });
@@ -427,14 +544,7 @@ function openFin(id){
   refreshFinOptions();
   const today = new Date().toISOString().slice(0,10);
   const f = id ? state.db.finances.find(x=>x.id===id) : {
-    id: uid('FIN'),
-    date: today,
-    category: 'Sparepart',
-    item: '',
-    cost: 0,
-    wo_id: '',
-    asset_id: '',
-    note_no: ''
+    id: uid('FIN'), date: today, category:'Sparepart', item:'', cost:0, wo_id:'', asset_id:'', note_no:'', receipts: []
   };
   document.getElementById('finId').value = f.id;
   document.getElementById('finDate').value = f.date;
@@ -444,12 +554,17 @@ function openFin(id){
   document.getElementById('finWO').value = f.wo_id || '';
   document.getElementById('finAsset').value = f.asset_id || '';
   document.getElementById('finNote').value = f.note_no || '';
+
+  document.getElementById('finReceipt').value='';
+  renderThumbs(document.getElementById('finReceiptPrev'), f.receipts || []);
+
   openModal('mFin');
 }
 
-function saveFin(e){
+async function saveFin(e){
   e.preventDefault();
   if (state.config.role === 'viewer') return alert('Mode atasan: tidak bisa edit.');
+
   const id = document.getElementById('finId').value;
   const item = {
     id,
@@ -459,8 +574,13 @@ function saveFin(e){
     cost: Number(document.getElementById('finCost').value || 0),
     wo_id: document.getElementById('finWO').value,
     asset_id: document.getElementById('finAsset').value,
-    note_no: document.getElementById('finNote').value.trim()
+    note_no: document.getElementById('finNote').value.trim(),
+    receipts: []
   };
+
+  const rFiles = document.getElementById('finReceipt').files;
+  if (rFiles && rFiles.length) item.receipts = await compressMany(rFiles);
+
   const idx = state.db.finances.findIndex(x=>x.id===id);
   if (idx>=0) state.db.finances[idx]=item; else state.db.finances.unshift(item);
   saveLocal();
@@ -479,9 +599,8 @@ function deleteCurrentFin(){
   refreshAll();
 }
 
-// ---------- Boot ----------
-function ensureMinimalRooms() {
-  // Create one default building/floor/room under Kantor if none exist, to avoid empty selects.
+// Boot: ensure minimal building/floor/room exists so dropdown doesn't empty.
+(function ensureMinimalRooms(){
   const hasRoom = state.db.locations.some(x=>x.type==='room');
   if (hasRoom) return;
   const b = { id: uid('b'), type:'building', parent:'site-kantor', name:'Gedung Utama' };
@@ -489,9 +608,7 @@ function ensureMinimalRooms() {
   const r = { id: uid('r'), type:'room', parent:f.id, name:'Ruang Umum' };
   state.db.locations.push(b,f,r);
   saveLocal();
-}
+})();
 
-ensureMinimalRooms();
 setRoleUI();
 refreshAll();
-
