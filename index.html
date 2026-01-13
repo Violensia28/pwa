@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TechPartner 6.1 (PWA) — Operasional Teknisi</title>
+  <title>TechPartner 6.2 (PWA) — Operasional Teknisi</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icons/icon-192.png" />
@@ -55,17 +55,13 @@
 
     .modal{position:fixed; inset:0; background:rgba(15,23,42,.65); display:none; align-items:center; justify-content:center; padding:14px; z-index:80}
     .modal.open{display:flex}
-    .modal .panel{width:min(720px,100%); max-height:92vh; overflow:auto; background:#fff; border-radius:18px; border:1px solid rgba(255,255,255,.2)}
+    .modal .panel{width:min(820px,100%); max-height:92vh; overflow:auto; background:#fff; border-radius:18px; border:1px solid rgba(255,255,255,.2)}
     .modal header{position:sticky; top:0; border-top-left-radius:18px; border-top-right-radius:18px}
 
     .hide{display:none !important}
     .small{font-size:12px}
 
-    @media print{
-      header,nav,.no-print{display:none !important}
-      body{background:#fff}
-      main{max-width:none}
-    }
+    @media print{ header,nav,.no-print{display:none !important} body{background:#fff} main{max-width:none} }
   </style>
 </head>
 <body>
@@ -73,7 +69,7 @@
     <div class="brand">
       <div class="logo">TP</div>
       <div>
-        <h1>TechPartner <span style="color:#60a5fa">6.1</span></h1>
+        <h1>TechPartner <span style="color:#60a5fa">6.2</span></h1>
         <small>Hybrid Modular • PWA • GitHub Pages</small>
       </div>
     </div>
@@ -138,7 +134,7 @@
             <div class="col-4 card kpi"><span class="muted">Rusak</span><b id="kBad">0</b></div>
           </div>
           <div class="row no-print" style="justify-content:space-between; margin-bottom:10px">
-            <div class="muted">Tampilan per halaman: <b id="pageInfo">1</b></div>
+            <div class="muted">Halaman: <b id="pageInfo">1</b></div>
             <div class="actions">
               <button class="pbtn" id="prevPage">Prev</button>
               <button class="pbtn" id="nextPage">Next</button>
@@ -218,7 +214,7 @@
       <div class="grid">
         <div class="col-12 card no-print">
           <b>Reports (Harian / Mingguan / Bulanan)</b>
-          <div class="muted">Mode Web untuk atasan + PDF (standar & formal) akan ditambahkan tahap berikutnya.</div>
+          <div class="muted">PDF Standar & Formal + Excel (rekap) tersedia. TTD: manual setelah print.</div>
           <div class="grid" style="margin-top:12px">
             <div class="col-4"><label>Periode</label>
               <select id="repMode">
@@ -234,7 +230,9 @@
             <button class="pbtn" id="btnWebSummary">Tampilkan Ringkasan</button>
             <button class="pbtn" id="btnPDFStd">PDF Standar</button>
             <button class="pbtn" id="btnPDFFormal">PDF Formal</button>
+            <button class="pbtn" id="btnExcel">Excel</button>
           </div>
+          <div class="muted small" style="margin-top:10px">Jika PDF/Excel gagal, cek koneksi internet (CDN library) dan reload.</div>
         </div>
         <div class="col-12 card" id="repBox"><div class="muted">Klik “Tampilkan Ringkasan”.</div></div>
       </div>
@@ -277,10 +275,14 @@
 
         <div class="col-12 card">
           <b>Template Laporan (Editable)</b>
-          <p class="muted small">Kosongkan jika tidak ingin kop tetap. Bisa diisi kapan saja.</p>
+          <p class="muted small">Kop boleh kosong (editable). Format nomor dokumen custom (format: C).</p>
           <div class="grid">
             <div class="col-6"><label>Nama Instansi/Kop</label><input id="orgName" placeholder="(kosong / editable)" /></div>
             <div class="col-6"><label>Prefix Nomor Dokumen</label><input id="docPrefix" placeholder="OPS-LOG" /></div>
+            <div class="col-12" style="margin-top:10px"><label>Format Nomor Dokumen</label>
+              <input id="docFormat" placeholder="{PREFIX}/{SEQ3}/{ROMAN}/{YYYY}" />
+              <div class="muted small" style="margin-top:6px">Token: {PREFIX} {SEQ3} {ROMAN} {YYYY} {MM}. Contoh: {PREFIX}/{SEQ3}/{ROMAN}/{YYYY}</div>
+            </div>
           </div>
         </div>
 
@@ -288,8 +290,7 @@
           <b>Keamanan Minimal</b>
           <ul class="muted small">
             <li>Jangan pernah commit token/API key ke repo. Simpan hanya di perangkat (localStorage).</li>
-            <li>Jangan simpan kredensial perangkat IT (password). Hanya info non-kredensial.</li>
-            <li>Jika memakai AI, tampilkan output sebagai text aman (hindari HTML injection).</li>
+            <li>TTD manual setelah print (sesuai kebijakan).</li>
           </ul>
         </div>
 
@@ -344,7 +345,7 @@
       </header>
       <form id="assetForm" style="padding:14px" class="grid">
         <input type="hidden" id="assetId" />
-        <div class="col-6"><label>No Inventaris/BMN</label><input id="assetCode" placeholder="BMN/BNN/Inventaris" /></div>
+        <div class="col-6"><label>No Inventaris/BMN</label><input id="assetCode" placeholder="BMN/Inventaris" /></div>
         <div class="col-6"><label>Serial</label><input id="assetSerial" placeholder="SN..." /></div>
         <div class="col-6"><label>Jenis</label><select id="assetType"></select></div>
         <div class="col-6"><label>Subjenis</label><input id="assetSubtype" placeholder="Split/Online/Managed..." /></div>
@@ -368,6 +369,7 @@
 
         <div class="col-12 actions">
           <button type="submit" class="pbtn primary">Simpan</button>
+          <button type="button" class="pbtn" id="btnAssetQR">QR Aset</button>
           <button type="button" class="pbtn danger" id="btnDeleteAsset">Hapus</button>
         </div>
       </form>
@@ -411,7 +413,7 @@
               <div id="woAfterPrev" class="row" style="margin-top:8px"></div>
             </div>
           </div>
-          <div class="muted small" style="margin-top:8px">Foto dikompres otomatis (lebar max 800px, kualitas ~0.6).</div>
+          <div class="muted small" style="margin-top:8px">Foto dikompres otomatis (max 800px, q~0.6).</div>
         </div>
 
         <div class="col-12 actions">
@@ -489,7 +491,7 @@
           <label class="small">Nota (maks 6)</label>
           <input id="finReceipt" type="file" accept="image/*" multiple />
           <div id="finReceiptPrev" class="row" style="margin-top:8px"></div>
-          <div class="muted small" style="margin-top:8px">Foto nota dikompres otomatis untuk hemat penyimpanan.</div>
+          <div class="muted small" style="margin-top:8px">Foto nota dikompres otomatis.</div>
         </div>
 
         <div class="col-12 actions">
@@ -499,6 +501,11 @@
       </form>
     </div>
   </div>
+
+  <!-- PDF/Excel Libraries (CDN). Offline PDF/Excel requires internet once or vendor locally. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
   <script type="module" src="./assets/app.js"></script>
 </body>
