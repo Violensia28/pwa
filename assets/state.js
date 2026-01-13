@@ -19,6 +19,7 @@ export const defaults = {
       schema: SCHEMA_VERSION,
       org_name: '',
       doc_prefix: 'OPS-LOG',
+      doc_format: '{PREFIX}/{SEQ3}/{ROMAN}/{YYYY}',
       last_doc_no: 0
     },
     locations: [

@@ -6,8 +6,9 @@ import { newWO, upsertWO, deleteWO, markVerified } from './wo.js';
 import { scanQRCode, parseQRPayload } from './qr.js';
 import { computeNextDue } from './pm.js';
 import { compressMany, renderThumbs } from './media.js';
+import { downloadPDFStandard, downloadPDFFormal, downloadExcel } from './reports.js';
 
-// Register service worker (HTTPS required; OK on GitHub Pages)
+// Register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try { await navigator.serviceWorker.register('./sw.js', { scope: './' }); }
@@ -15,21 +16,17 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Navigation
 for (const btn of document.querySelectorAll('nav button')) {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
 }
 
-// Online/offline indicator
 function netUpdate(){ setNet(navigator.onLine); }
 window.addEventListener('online', netUpdate);
 window.addEventListener('offline', netUpdate);
 netUpdate();
 
-// Load local DB
 loadLocal();
 
-// Photo preview bindings
 function bindPhotoPreviews(){
   const woBefore = document.getElementById('woBefore');
   const woAfter = document.getElementById('woAfter');
@@ -45,7 +42,6 @@ function bindPhotoPreviews(){
 }
 bindPhotoPreviews();
 
-// Init filters
 initLocationFilters();
 initTypeFilter();
 initSearchAndCond();
@@ -67,6 +63,15 @@ document.getElementById('btnRestore').onclick = async () => {
   refreshAll();
 };
 
+// Reports
+const today = new Date().toISOString().slice(0,10);
+document.getElementById('repEnd').value = today;
+document.getElementById('repStart').value = today;
+document.getElementById('btnWebSummary').onclick = () => renderReportSummary();
+document.getElementById('btnPDFStd').onclick = () => downloadPDFStandard();
+document.getElementById('btnPDFFormal').onclick = () => downloadPDFFormal();
+document.getElementById('btnExcel').onclick = () => downloadExcel();
+
 // QR scan
 document.getElementById('btnScan').onclick = async () => {
   const text = await scanQRCode();
@@ -86,6 +91,7 @@ window.appOpenAsset = (id) => openAsset(id);
 document.getElementById('btnAddAsset').onclick = () => openAsset(null);
 document.getElementById('btnCloseAsset').onclick = () => closeModal('mAsset');
 document.getElementById('btnDeleteAsset').onclick = () => deleteAsset();
+document.getElementById('btnAssetQR').onclick = () => showAssetQR();
 document.getElementById('assetForm').onsubmit = (e) => saveAsset(e);
 
 // WO
@@ -110,14 +116,6 @@ document.getElementById('btnCloseFin').onclick = () => closeModal('mFin');
 document.getElementById('btnDeleteFin').onclick = () => deleteCurrentFin();
 document.getElementById('finForm').onsubmit = (e) => saveFin(e);
 
-// Reports
-const today = new Date().toISOString().slice(0,10);
-document.getElementById('repEnd').value = today;
-document.getElementById('repStart').value = today;
-document.getElementById('btnWebSummary').onclick = () => renderReportSummary();
-document.getElementById('btnPDFStd').onclick = () => alert('PDF generator akan ditambahkan tahap berikutnya.');
-document.getElementById('btnPDFFormal').onclick = () => alert('PDF formal akan ditambahkan tahap berikutnya.');
-
 // Settings save
 
 document.getElementById('btnSaveSettings').onclick = () => {
@@ -129,13 +127,13 @@ document.getElementById('btnSaveSettings').onclick = () => {
   state.config.pin_viewer = document.getElementById('pinViewer').value.trim();
   state.config.role = document.getElementById('modeRole').value;
 
-  // report template (editable; can be blank)
   state.db.meta = state.db.meta || {};
   state.db.meta.org_name = document.getElementById('orgName').value.trim();
   state.db.meta.doc_prefix = document.getElementById('docPrefix').value.trim() || 'OPS-LOG';
+  state.db.meta.doc_format = document.getElementById('docFormat').value.trim() || '{PREFIX}/{SEQ3}/{ROMAN}/{YYYY}';
+
   saveLocal();
   saveConfig();
-
   closeModal('mSettings');
   setRoleUI();
 };
@@ -146,7 +144,6 @@ document.getElementById('btnClearLocal').onclick = () => {
   refreshAll();
 };
 
-// helpers
 function filePick(accept) {
   return new Promise((resolve)=>{
     const inp = document.createElement('input');
@@ -197,7 +194,16 @@ function openSettings(){
   document.getElementById('modeRole').value = state.config.role;
   document.getElementById('orgName').value = state.db.meta?.org_name || '';
   document.getElementById('docPrefix').value = state.db.meta?.doc_prefix || 'OPS-LOG';
+  document.getElementById('docFormat').value = state.db.meta?.doc_format || '{PREFIX}/{SEQ3}/{ROMAN}/{YYYY}';
   openModal('mSettings');
+}
+
+function showAssetQR(){
+  const id = document.getElementById('assetId').value;
+  if (!id) return alert('Simpan aset dulu agar punya ID.');
+  const payload = `tp6://asset/${id}`;
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(payload)}`;
+  window.open(url, '_blank');
 }
 
 // ---------- Locations Manager ----------
@@ -599,7 +605,7 @@ function deleteCurrentFin(){
   refreshAll();
 }
 
-// Boot: ensure minimal building/floor/room exists so dropdown doesn't empty.
+// Boot minimal rooms
 (function ensureMinimalRooms(){
   const hasRoom = state.db.locations.some(x=>x.type==='room');
   if (hasRoom) return;

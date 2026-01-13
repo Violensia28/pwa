@@ -39,7 +39,7 @@ export async function githubPush(message='Update DB') {
   });
   const data = await res.json().catch(()=> ({}));
   if (!res.ok) throw new Error(`GitHub push gagal: ${data.message || res.status}`);
-  if (data?.content?.sha) state.sha = data.content.sha; // update sha to avoid mismatch
+  if (data?.content?.sha) state.sha = data.content.sha;
 }
 
 export function exportBackup() {

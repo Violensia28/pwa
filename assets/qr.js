@@ -6,14 +6,6 @@ export async function scanQRCode() {
   return (val || '').trim();
 }
 
-export function buildAssetQRPayload(assetId) {
-  return `tp6://asset/${assetId}`;
-}
-
-export function buildLocationQRPayload(locationId) {
-  return `tp6://location/${locationId}`;
-}
-
 export function parseQRPayload(text) {
   const t = (text || '').trim();
   const m1 = t.match(/^tp6:\/\/asset\/(.+)$/);

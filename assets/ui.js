@@ -78,8 +78,6 @@ export function initSearchAndCond() {
   document.getElementById('fCond').onchange = (e) => { state.ui.filters.cond = e.target.value; state.ui.page=1; renderAssets(); };
 }
 
-function locName(id) { const x=state.db.locations.find(a=>a.id===id); return x?x.name:'-'; }
-
 function fullLocation(roomId) {
   const room = state.db.locations.find(x=>x.id===roomId);
   if (!room) return '-';
@@ -179,7 +177,7 @@ export function renderWO() {
   list.innerHTML = items.map(w => {
     const badge = w.status==='Verified' ? 'b-ok' : w.status==='Done' ? 'b-info' : w.status==='On Progress' ? 'b-warn' : 'b-bad';
     const a = w.asset_id ? assetMap.get(w.asset_id) : null;
-    const loc = a ? fullLocation(a.location_id) : (w.location_id ? locName(w.location_id) : '-');
+    const loc = a ? fullLocation(a.location_id) : (w.location_id || '-');
     const beforeThumb = firstThumb(w.photos?.before);
     const afterThumb = firstThumb(w.photos?.after);
     return `
