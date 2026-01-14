@@ -1,13 +1,17 @@
-# TechPartner 6.4 (Hybrid Modular + PWA)
+# TechPartner 6.3 (Hybrid Modular + PWA)
 
 Repo: **pwa** (GitHub Project Pages)
 
-## v6.4 — Opsi C + C2
-- Tombol inline di dropdown **Lokasi (Ruang)**: tambah/edit/hapus/kelola.
-- **Edit ruang (C2)**: rename + pindah parent (lantai) dengan tampilan **full path**: `Site / Gedung / Lantai`.
-- Hapus ruang diblok jika masih dipakai aset.
-
-## Deploy
+## Deploy ke GitHub Pages
 1. Upload semua isi folder `techpartner-pwa/` ke root repo.
 2. Settings → Pages → Deploy from branch → `main` / root.
-3. Enforce HTTPS ON.
+3. Aktifkan **Enforce HTTPS** (wajib untuk Service Worker & kamera).
+
+## Scan QR Kamera
+- Klik **Scan QR** → aplikasi meminta izin kamera.
+- QR `tp6://asset/<id>` membuka detail aset.
+- QR `tp6://location/<id>` mem-filter daftar aset ke ruang tersebut.
+- BarcodeDetector bersifat experimental; jika tidak tersedia, gunakan tombol Manual.
+
+## Catatan
+- getUserMedia dan BarcodeDetector hanya bekerja di secure context (HTTPS/localhost).

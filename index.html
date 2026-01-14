@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TechPartner 6.4 (PWA) — Operasional Teknisi</title>
+  <title>TechPartner 6.3 (PWA) — Operasional Teknisi</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icons/icon-192.png" />
@@ -52,7 +52,6 @@
     .pbtn{border:1px solid var(--line); background:#fff; padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:900; color:#0f172a}
     .pbtn.primary{border-color:var(--accent); background:var(--accent); color:#fff}
     .pbtn.danger{border-color:rgba(239,68,68,.4); color:#991b1b}
-    .pbtn.small{padding:8px 10px; font-size:12px}
 
     .modal{position:fixed; inset:0; background:rgba(15,23,42,.65); display:none; align-items:center; justify-content:center; padding:14px; z-index:80}
     .modal.open{display:flex}
@@ -70,7 +69,7 @@
     <div class="brand">
       <div class="logo">TP</div>
       <div>
-        <h1>TechPartner <span style="color:#60a5fa">6.4</span></h1>
+        <h1>TechPartner <span style="color:#60a5fa">6.3</span></h1>
         <small>Hybrid Modular • PWA • GitHub Pages</small>
       </div>
     </div>
@@ -262,32 +261,11 @@
               <button class="pbtn" id="btnManualScan">Manual</button>
             </div>
           </div>
-          <div class="muted small" style="margin-top:10px">Catatan: Scan kamera membutuhkan HTTPS + izin kamera.</div>
+          <div class="muted small" style="margin-top:10px">
+            Catatan: Scan kamera membutuhkan HTTPS + izin kamera. BarcodeDetector bersifat experimental dan tidak ada di semua browser.
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- ROOM QUICK MODAL (C2: edit + pindah parent) -->
-  <div class="modal" id="mRoom">
-    <div class="panel">
-      <header>
-        <div class="brand"><div class="logo">🏷</div><div><h1 id="roomTitle">Ruang</h1><small>Tambah / Edit (rename + pindah lantai)</small></div></div>
-        <div class="topbtns"><button class="btn" id="btnCloseRoom">Tutup</button></div>
-      </header>
-      <form id="roomForm" style="padding:14px" class="grid">
-        <input type="hidden" id="roomId" />
-        <div class="col-6"><label>Nama Ruang</label><input id="roomName" placeholder="cth: Ruang Server"/></div>
-        <div class="col-6"><label>Pindah ke Lantai (full path)</label><select id="roomFloor"></select></div>
-        <div class="col-12 card">
-          <b>Catatan</b>
-          <div class="muted small">Pindah lantai hanya mengubah parent lokasi. Aset yang sudah terhubung tetap aman (ID ruang tidak berubah).</div>
-        </div>
-        <div class="col-12 actions">
-          <button type="submit" class="pbtn primary" id="btnSaveRoom">Simpan</button>
-          <button type="button" class="pbtn" id="btnOpenLocMgr">Kelola Lokasi</button>
-        </div>
-      </form>
     </div>
   </div>
 
@@ -404,18 +382,7 @@
         <div class="col-6"><label>Merk</label><input id="assetBrand" /></div>
         <div class="col-6"><label>Model</label><input id="assetModel" /></div>
 
-        <div class="col-6">
-          <label>Lokasi (Ruang)</label>
-          <div class="row" style="gap:8px">
-            <div style="flex:1"><select id="assetRoom"></select></div>
-            <button type="button" class="pbtn small" id="btnRoomAdd">➕</button>
-            <button type="button" class="pbtn small" id="btnRoomEdit">✏️</button>
-            <button type="button" class="pbtn small danger" id="btnRoomDel">🗑</button>
-            <button type="button" class="pbtn small" id="btnRoomManage">⚙</button>
-          </div>
-          <div class="muted small" style="margin-top:6px">Edit ruang (C2): rename + pindah lantai (full path).</div>
-        </div>
-
+        <div class="col-6"><label>Lokasi (Ruang)</label><select id="assetRoom"></select></div>
         <div class="col-6"><label>Kritikalitas</label>
           <select id="assetCrit"><option>Rendah</option><option selected>Sedang</option><option>Tinggi</option></select>
         </div>
@@ -456,17 +423,7 @@
           <select id="woPrio"><option>Rendah</option><option selected>Sedang</option><option>Tinggi</option></select>
         </div>
         <div class="col-6"><label>Terkait Aset</label><select id="woAsset"></select></div>
-        <div class="col-6">
-          <label>Lokasi (jika tanpa aset)</label>
-          <div class="row" style="gap:8px">
-            <div style="flex:1"><select id="woLoc"></select></div>
-            <button type="button" class="pbtn small" id="btnWORoomAdd">➕</button>
-            <button type="button" class="pbtn small" id="btnWORoomEdit">✏️</button>
-            <button type="button" class="pbtn small danger" id="btnWORoomDel">🗑</button>
-            <button type="button" class="pbtn small" id="btnWORoomManage">⚙</button>
-          </div>
-          <div class="muted small" style="margin-top:6px">Opsional jika WO tidak terkait aset.</div>
-        </div>
+        <div class="col-6"><label>Lokasi (jika tanpa aset)</label><select id="woLoc"></select></div>
         <div class="col-6"><label>Judul</label><input id="woTitle" placeholder="Singkat dan jelas" /></div>
         <div class="col-12"><label>Temuan</label><textarea id="woFinding" rows="2"></textarea></div>
         <div class="col-12"><label>Tindakan</label><textarea id="woAction" rows="2"></textarea></div>
