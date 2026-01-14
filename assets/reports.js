@@ -1,240 +1,33 @@
 // assets/reports.js
-// PDF (standard & formal) and Excel export.
-
 import { state, fmtRp, saveLocal } from './state.js';
 
-function romanMonth(m) {
-  const r = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
-  return r[(m||1)-1] || 'I';
-}
-
+function romanMonth(m){ const r=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII']; return r[(m||1)-1]||'I'; }
 function pad3(n){ return String(Number(n||0)).padStart(3,'0'); }
 
-export function nextDocNo(){
-  state.db.meta = state.db.meta || {};
-  state.db.meta.last_doc_no = Number(state.db.meta.last_doc_no || 0) + 1;
-  saveLocal();
-  return state.db.meta.last_doc_no;
-}
+export function nextDocNo(){ state.db.meta=state.db.meta||{}; state.db.meta.last_doc_no=Number(state.db.meta.last_doc_no||0)+1; saveLocal(); return state.db.meta.last_doc_no; }
 
 export function formatDocNumber(seq, dateStr){
   const d = dateStr ? new Date(dateStr+'T00:00:00') : new Date();
-  const YYYY = d.getFullYear();
-  const MM = d.getMonth()+1;
-  const ROMAN = romanMonth(MM);
-  const PREFIX = (state.db.meta?.doc_prefix || 'OPS-LOG');
-  const SEQ3 = pad3(seq);
-  const fmt = (state.db.meta?.doc_format || '{PREFIX}/{SEQ3}/{ROMAN}/{YYYY}');
-  return fmt
-    .replaceAll('{SEQ3}', SEQ3)
-    .replaceAll('{PREFIX}', PREFIX)
-    .replaceAll('{ROMAN}', ROMAN)
-    .replaceAll('{YYYY}', String(YYYY))
-    .replaceAll('{MM}', String(MM).padStart(2,'0'));
+  const YYYY=d.getFullYear(); const MM=d.getMonth()+1; const ROMAN=romanMonth(MM);
+  const PREFIX=(state.db.meta?.doc_prefix||'OPS-LOG'); const SEQ3=pad3(seq);
+  const fmt=(state.db.meta?.doc_format||'{PREFIX}/{SEQ3}/{ROMAN}/{YYYY}');
+  return fmt.replaceAll('{SEQ3}',SEQ3).replaceAll('{PREFIX}',PREFIX).replaceAll('{ROMAN}',ROMAN).replaceAll('{YYYY}',String(YYYY)).replaceAll('{MM}',String(MM).padStart(2,'0'));
 }
 
-function inRange(d, s, e){ return d && d >= s && d <= e; }
+function inRange(d,s,e){ return d && d>=s && d<=e; }
+function getRange(){ const s=document.getElementById('repStart').value; const e=document.getElementById('repEnd').value; return {s,e}; }
 
-function getRange(){
-  const s = document.getElementById('repStart').value;
-  const e = document.getElementById('repEnd').value;
-  return { s, e };
-}
+function addHeader(doc,title,subtitle){ const W=doc.internal.pageSize.getWidth(); doc.setFillColor(15,23,42); doc.rect(0,0,W,26,'F'); doc.setTextColor(255); doc.setFontSize(16); doc.text(title,14,16); doc.setFontSize(10); doc.text(subtitle,14,22); doc.setTextColor(0); }
+function addOrgHeaderFormal(doc){ const org=(state.db.meta?.org_name||'').trim(); const W=doc.internal.pageSize.getWidth(); doc.setFontSize(12); if(org){ doc.text(org,W/2,18,{align:'center'}); doc.setDrawColor(15,23,42); doc.setLineWidth(0.6); doc.line(14,24,W-14,24);} else { doc.setDrawColor(200); doc.setLineWidth(0.3); doc.line(14,18,W-14,18);} }
 
-function addHeader(doc, title, subtitle){
-  const W = doc.internal.pageSize.getWidth();
-  doc.setFillColor(15,23,42);
-  doc.rect(0,0,W,26,'F');
-  doc.setTextColor(255);
-  doc.setFontSize(16);
-  doc.text(title, 14, 16);
-  doc.setFontSize(10);
-  doc.text(subtitle, 14, 22);
-  doc.setTextColor(0);
-}
+function tableWO(doc,rows,startY){ doc.autoTable({ startY, head:[['Tgl','Status','Prio','Lokasi/Aset','Judul','Temuan','Tindakan','Hasil']], body:rows, styles:{fontSize:7,cellPadding:2}, headStyles:{fillColor:[15,23,42],textColor:255} }); return doc.lastAutoTable.finalY+6; }
+function tableActivity(doc,rows,startY){ doc.autoTable({ startY, head:[['Tgl','Jam','Kat','WO','Judul','Deskripsi']], body:rows, styles:{fontSize:8,cellPadding:2}, headStyles:{fillColor:[15,23,42],textColor:255} }); return doc.lastAutoTable.finalY+6; }
+function signatureBlock(doc,y){ const W=doc.internal.pageSize.getWidth(); doc.setFontSize(10); doc.text('Dibuat oleh,',18,y); doc.text('Mengetahui,',W-60,y); doc.setDrawColor(0); doc.line(18,y+28,60,y+28); doc.line(W-60,y+28,W-18,y+28); doc.setFontSize(9); doc.text('(Petugas)',18,y+34); doc.text('(Atasan)',W-60,y+34); }
 
-function addOrgHeaderFormal(doc){
-  const org = (state.db.meta?.org_name || '').trim();
-  const W = doc.internal.pageSize.getWidth();
-  doc.setFontSize(12);
-  if (org) {
-    doc.text(org, W/2, 18, { align:'center' });
-    doc.setDrawColor(15,23,42);
-    doc.setLineWidth(0.6);
-    doc.line(14, 24, W-14, 24);
-  } else {
-    doc.setDrawColor(200);
-    doc.setLineWidth(0.3);
-    doc.line(14, 18, W-14, 18);
-  }
-}
+function addPhotosSection(doc,title,items,getPhotos){ const W=doc.internal.pageSize.getWidth(); const H=doc.internal.pageSize.getHeight(); doc.addPage(); addHeader(doc,title,'Lampiran Foto (Before/After)'); let y=34; const cellW=(W-28-8)/2; const cellH=60; for(const it of items){ const p=getPhotos(it); const before=(p.before||[]).slice(0,1); const after=(p.after||[]).slice(0,1); doc.setFontSize(9); doc.text((p.caption||'').toString().slice(0,90),14,y); y+=6; const bx=14; const ax=14+cellW+8; doc.setDrawColor(220); doc.rect(bx,y,cellW,cellH); doc.rect(ax,y,cellW,cellH); doc.setFontSize(8); doc.text('Before',bx,y-1); doc.text('After',ax,y-1); try{ if(before[0]) doc.addImage(before[0],'JPEG',bx+2,y+2,cellW-4,cellH-4);}catch(e){} try{ if(after[0]) doc.addImage(after[0],'JPEG',ax+2,y+2,cellW-4,cellH-4);}catch(e){} y+=(cellH+14); if(y>H-30){ doc.addPage(); addHeader(doc,title,'Lampiran Foto (lanjutan)'); y=34; } } }
 
-function tableWO(doc, rows, startY){
-  doc.autoTable({
-    startY,
-    head: [['Tgl','Status','Prio','Lokasi/Aset','Judul','Temuan','Tindakan','Hasil']],
-    body: rows,
-    styles: { fontSize: 7, cellPadding: 2 },
-    headStyles: { fillColor: [15,23,42], textColor: 255 },
-  });
-  return doc.lastAutoTable.finalY + 6;
-}
+export function downloadPDFStandard(){ const {s,e}=getRange(); const wos=state.db.work_orders.filter(x=>inRange(x.date,s,e)); const acts=state.db.activities.filter(x=>inRange(x.date,s,e)); const fins=state.db.finances.filter(x=>inRange(x.date,s,e)); if(!window.jspdf) return alert('jsPDF belum dimuat. Pastikan internet OK.'); const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'}); addHeader(doc,'Laporan (Standar)',`Periode: ${s} s/d ${e}`); const total=fins.reduce((acc,x)=>acc+(Number(x.cost)||0),0); const done=wos.filter(x=>x.status==='Done'||x.status==='Verified').length; const open=wos.filter(x=>x.status==='Open'||x.status==='On Progress').length; doc.setFontSize(11); doc.text(`Ringkasan: WO=${wos.length} (Selesai=${done}, Pending=${open}) • Aktivitas=${acts.length} • Biaya=${fmtRp(total)}`,14,34); let y=40; if(wos.length){ doc.setFontSize(12); doc.text('Work Order',14,y); y+=4; const rows=wos.map(w=>[w.date||'',w.status||'',w.priority||'',w.asset_id||w.location_id||'-',w.title||'',w.finding||'',w.action||'',w.result||'']); y=tableWO(doc,rows,y+2);} if(acts.length){ doc.setFontSize(12); doc.text('Activity',14,y); y+=4; const rows=acts.map(a=>[a.date||'',a.time||'',a.tag||'',a.wo_id||'',a.title||'',a.desc||'']); y=tableActivity(doc,rows,y+2);} doc.save(`Laporan_Standar_${s}_${e}.pdf`); }
 
-function tableActivity(doc, rows, startY){
-  doc.autoTable({
-    startY,
-    head: [['Tgl','Jam','Kat','WO','Judul','Deskripsi']],
-    body: rows,
-    styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [15,23,42], textColor: 255 },
-  });
-  return doc.lastAutoTable.finalY + 6;
-}
+export function downloadPDFFormal(){ const {s,e}=getRange(); const wos=state.db.work_orders.filter(x=>inRange(x.date,s,e)); const acts=state.db.activities.filter(x=>inRange(x.date,s,e)); if(!window.jspdf) return alert('jsPDF belum dimuat. Pastikan internet OK.'); const seq=nextDocNo(); const docNo=formatDocNumber(seq,s); const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'}); addOrgHeaderFormal(doc); doc.setFontSize(14); doc.text('LAPORAN KEGIATAN PEMELIHARAAN & PERBAIKAN',105,34,{align:'center'}); doc.setFontSize(11); doc.text(`Nomor: ${docNo}`,105,41,{align:'center'}); doc.setFontSize(10); doc.text(`Periode: ${s} s/d ${e}`,105,47,{align:'center'}); let y=56; if(wos.length){ doc.setFontSize(12); doc.text('A. Work Order',14,y); y+=4; const rows=wos.map(w=>[w.date||'',w.status||'',w.priority||'',w.asset_id||w.location_id||'-',w.title||'',w.finding||'',w.action||'',w.result||'']); y=tableWO(doc,rows,y+2);} if(acts.length){ doc.setFontSize(12); doc.text('B. Log Kegiatan',14,y); y+=4; const rows=acts.map(a=>[a.date||'',a.time||'',a.tag||'',a.wo_id||'',a.title||'',a.desc||'']); y=tableActivity(doc,rows,y+2);} doc.addPage(); addOrgHeaderFormal(doc); doc.setFontSize(12); doc.text('PENGESAHAN',105,32,{align:'center'}); doc.setFontSize(10); doc.text(`Periode: ${s} s/d ${e}`,105,38,{align:'center'}); signatureBlock(doc,70); addPhotosSection(doc,'Lampiran WO',wos,(w)=>({caption:`WO: ${w.id} — ${w.title||''}`,before:w.photos?.before||[],after:w.photos?.after||[]})); addPhotosSection(doc,'Lampiran Activity',acts,(a)=>({caption:`ACT: ${a.id} — ${a.title||''}`,before:a.photos?.before||[],after:a.photos?.after||[]})); doc.save(`Laporan_Formal_${docNo.replaceAll('/','-')}_${s}_${e}.pdf`); }
 
-function signatureBlock(doc, y){
-  const W = doc.internal.pageSize.getWidth();
-  doc.setFontSize(10);
-  doc.text('Dibuat oleh,', 18, y);
-  doc.text('Mengetahui,', W-60, y);
-  doc.setDrawColor(0);
-  doc.line(18, y+28, 60, y+28);
-  doc.line(W-60, y+28, W-18, y+28);
-  doc.setFontSize(9);
-  doc.text('(Petugas)', 18, y+34);
-  doc.text('(Atasan)', W-60, y+34);
-}
-
-function addPhotosSection(doc, title, items, getPhotos){
-  const W = doc.internal.pageSize.getWidth();
-  const H = doc.internal.pageSize.getHeight();
-
-  doc.addPage();
-  addHeader(doc, title, 'Lampiran Foto (Before/After)');
-
-  let y = 34;
-  const cellW = (W-28-8)/2;
-  const cellH = 60;
-
-  for (const it of items) {
-    const p = getPhotos(it);
-    const before = (p.before||[]).slice(0,1);
-    const after = (p.after||[]).slice(0,1);
-
-    doc.setFontSize(9);
-    doc.text((p.caption||'').toString().slice(0,90), 14, y);
-    y += 6;
-
-    const bx = 14;
-    const ax = 14 + cellW + 8;
-
-    doc.setDrawColor(220);
-    doc.rect(bx, y, cellW, cellH);
-    doc.rect(ax, y, cellW, cellH);
-    doc.setFontSize(8);
-    doc.text('Before', bx, y-1);
-    doc.text('After', ax, y-1);
-
-    try { if (before[0]) doc.addImage(before[0], 'JPEG', bx+2, y+2, cellW-4, cellH-4); } catch(e) {}
-    try { if (after[0]) doc.addImage(after[0], 'JPEG', ax+2, y+2, cellW-4, cellH-4); } catch(e) {}
-
-    y += (cellH + 14);
-    if (y > H-30) {
-      doc.addPage();
-      addHeader(doc, title, 'Lampiran Foto (lanjutan)');
-      y = 34;
-    }
-  }
-}
-
-export function downloadPDFStandard(){
-  const { s, e } = getRange();
-  const wos = state.db.work_orders.filter(x => inRange(x.date, s, e));
-  const acts = state.db.activities.filter(x => inRange(x.date, s, e));
-  const fins = state.db.finances.filter(x => inRange(x.date, s, e));
-  if (!window.jspdf) return alert('jsPDF belum dimuat. Pastikan internet OK.');
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'mm', format:'a4' });
-  addHeader(doc, 'Laporan (Standar)', `Periode: ${s} s/d ${e}`);
-
-  const total = fins.reduce((acc,x)=>acc+(Number(x.cost)||0),0);
-  const done = wos.filter(x=>x.status==='Done'||x.status==='Verified').length;
-  const open = wos.filter(x=>x.status==='Open'||x.status==='On Progress').length;
-
-  doc.setFontSize(11);
-  doc.text(`Ringkasan: WO=${wos.length} (Selesai=${done}, Pending=${open}) • Aktivitas=${acts.length} • Biaya=${fmtRp(total)}`, 14, 34);
-
-  let y = 40;
-  if (wos.length) {
-    doc.setFontSize(12); doc.text('Work Order', 14, y); y += 4;
-    const rows = wos.map(w => [w.date||'', w.status||'', w.priority||'', w.asset_id||w.location_id||'-', w.title||'', w.finding||'', w.action||'', w.result||'']);
-    y = tableWO(doc, rows, y+2);
-  }
-  if (acts.length) {
-    doc.setFontSize(12); doc.text('Activity', 14, y); y += 4;
-    const rows = acts.map(a => [a.date||'', a.time||'', a.tag||'', a.wo_id||'', a.title||'', a.desc||'']);
-    y = tableActivity(doc, rows, y+2);
-  }
-
-  doc.save(`Laporan_Standar_${s}_${e}.pdf`);
-}
-
-export function downloadPDFFormal(){
-  const { s, e } = getRange();
-  const wos = state.db.work_orders.filter(x => inRange(x.date, s, e));
-  const acts = state.db.activities.filter(x => inRange(x.date, s, e));
-  if (!window.jspdf) return alert('jsPDF belum dimuat. Pastikan internet OK.');
-
-  const seq = nextDocNo();
-  const docNo = formatDocNumber(seq, s);
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit:'mm', format:'a4' });
-
-  addOrgHeaderFormal(doc);
-  doc.setFontSize(14);
-  doc.text('LAPORAN KEGIATAN PEMELIHARAAN & PERBAIKAN', 105, 34, { align:'center' });
-  doc.setFontSize(11);
-  doc.text(`Nomor: ${docNo}`, 105, 41, { align:'center' });
-  doc.setFontSize(10);
-  doc.text(`Periode: ${s} s/d ${e}`, 105, 47, { align:'center' });
-
-  let y = 56;
-  if (wos.length) {
-    doc.setFontSize(12); doc.text('A. Work Order', 14, y); y += 4;
-    const rows = wos.map(w => [w.date||'', w.status||'', w.priority||'', w.asset_id||w.location_id||'-', w.title||'', w.finding||'', w.action||'', w.result||'']);
-    y = tableWO(doc, rows, y+2);
-  }
-  if (acts.length) {
-    doc.setFontSize(12); doc.text('B. Log Kegiatan', 14, y); y += 4;
-    const rows = acts.map(a => [a.date||'', a.time||'', a.tag||'', a.wo_id||'', a.title||'', a.desc||'']);
-    y = tableActivity(doc, rows, y+2);
-  }
-
-  doc.addPage();
-  addOrgHeaderFormal(doc);
-  doc.setFontSize(12);
-  doc.text('PENGESAHAN', 105, 32, { align:'center' });
-  doc.setFontSize(10);
-  doc.text(`Periode: ${s} s/d ${e}`, 105, 38, { align:'center' });
-  signatureBlock(doc, 70);
-
-  addPhotosSection(doc, 'Lampiran WO', wos, (w)=>({ caption:`WO: ${w.id} — ${w.title||''}`, before:w.photos?.before||[], after:w.photos?.after||[] }));
-  addPhotosSection(doc, 'Lampiran Activity', acts, (a)=>({ caption:`ACT: ${a.id} — ${a.title||''}`, before:a.photos?.before||[], after:a.photos?.after||[] }));
-
-  doc.save(`Laporan_Formal_${docNo.replaceAll('/','-')}_${s}_${e}.pdf`);
-}
-
-export function downloadExcel(){
-  const { s, e } = getRange();
-  if (!window.XLSX) return alert('XLSX belum dimuat. Pastikan internet OK.');
-  const inR = (d) => d && d >= s && d <= e;
-  const wb = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.db.assets), 'Assets');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.db.work_orders.filter(w=>inR(w.date))), 'WO');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.db.activities.filter(a=>inR(a.date))), 'Activity');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(state.db.finances.filter(f=>inR(f.date))), 'Finance');
-
-  XLSX.writeFile(wb, `Rekap_${s}_${e}.xlsx`);
-}
+export function downloadExcel(){ const {s,e}=getRange(); if(!window.XLSX) return alert('XLSX belum dimuat. Pastikan internet OK.'); const inR=(d)=>d&&d>=s&&d<=e; const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.db.assets),'Assets'); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.db.work_orders.filter(w=>inR(w.date))),'WO'); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.db.activities.filter(a=>inR(a.date))),'Activity'); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(state.db.finances.filter(f=>inR(f.date))),'Finance'); XLSX.writeFile(wb,`Rekap_${s}_${e}.xlsx`); }

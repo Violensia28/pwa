@@ -1,6 +1,4 @@
 // assets/media.js
-// Image compression utilities (client-side) for before/after and receipts.
-
 export async function compressImage(file, maxWidth=800, quality=0.6) {
   if (!file) return null;
   const dataURL = await fileToDataURL(file);
