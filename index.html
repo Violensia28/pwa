@@ -3,86 +3,142 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TechPartner 6.5 (PWA)</title>
+  <title>TechPartner 6.5 (PWA) — Operasional Teknisi</title>
   <meta name="theme-color" content="#0f172a" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icons/icon-192.png" />
   <style>
-    :root{--bg:#f8fafc;--fg:#0f172a;--muted:#64748b;--card:#fff;--line:#e2e8f0;--accent:#3b82f6;--ok:#10b981;--warn:#f59e0b;}
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#1e293b}
-    header{background:var(--fg);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-    .brand{display:flex;gap:10px;align-items:center}
+    :root{--bg:#f8fafc;--fg:#0f172a;--muted:#64748b;--card:#fff;--line:#e2e8f0;--accent:#3b82f6;--ok:#10b981;--warn:#f59e0b;--bad:#ef4444;}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:#1e293b;}
+    header{background:var(--fg); color:#fff; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;}
+    .brand{display:flex; gap:10px; align-items:center}
     .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#6366f1);display:grid;place-items:center;font-weight:900}
-    nav{background:#fff;border-bottom:1px solid var(--line);display:flex;gap:8px;padding:10px 12px;position:sticky;top:64px;z-index:40;overflow:auto}
-    nav button{border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:800;color:#334155;white-space:nowrap}
-    nav button.active{border-color:var(--accent);color:var(--fg)}
-    main{padding:14px 12px;max-width:1200px;margin:0 auto}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
-    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
-    .col-12{grid-column:span 12}.col-4{grid-column:span 12}
-    @media(min-width:900px){.col-4{grid-column:span 4}}
-    input,select{width:100%;padding:10px;border-radius:12px;border:1px solid var(--line)}
-    label{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .pbtn{border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:900}
-    .pbtn.small{padding:8px 10px;font-size:12px}
-    .pbtn.danger{border-color:rgba(239,68,68,.4);color:#991b1b}
-    .modal{position:fixed;inset:0;background:rgba(15,23,42,.65);display:none;align-items:center;justify-content:center;padding:14px;z-index:80}
+    .brand h1{margin:0;font-size:16px; line-height:1.1}
+    .brand small{display:block;color:#a3b2c7;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:10px}
+    .topbtns{display:flex; gap:8px; align-items:center}
+    .btn{border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:#fff; padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:700; font-size:12px}
+    .btn:hover{background:rgba(255,255,255,.1)}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:800; border:1px solid var(--line); background:#fff}
+    .dot{width:9px;height:9px;border-radius:50%}
+    nav{background:#fff; border-bottom:1px solid var(--line); display:flex; gap:8px; padding:10px 12px; position:sticky; top:64px; z-index:40; overflow:auto}
+    nav button{border:1px solid var(--line); background:#fff; padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:800; color:#334155; white-space:nowrap}
+    nav button.active{border-color:var(--accent); color:var(--fg); box-shadow:0 6px 14px rgba(59,130,246,.15)}
+    main{padding:14px 12px; max-width:1200px; margin:0 auto}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:12px}
+    .col-12{grid-column:span 12} .col-6{grid-column:span 12} .col-4{grid-column:span 12}
+    @media (min-width:900px){.col-6{grid-column:span 6}.col-4{grid-column:span 4}}
+    input,select,textarea{width:100%; padding:10px 10px; border-radius:12px; border:1px solid var(--line); outline:none; background:#fff; color:#0f172a}
+    label{font-size:11px; font-weight:900; color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+    .list{display:grid; grid-template-columns:repeat(12,1fr); gap:12px}
+    .item{grid-column:span 12; padding:12px; border:1px solid var(--line); border-radius:16px; background:#fff}
+    @media(min-width:900px){.item{grid-column:span 4}}
+    .badge{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.08em}
+    .b-ok{background:rgba(16,185,129,.12); color:#047857}
+    .b-warn{background:rgba(245,158,11,.14); color:#92400e}
+    .b-bad{background:rgba(239,68,68,.14); color:#991b1b}
+    .b-info{background:rgba(99,102,241,.14); color:#3730a3}
+    .muted{color:var(--muted); font-size:12px}
+    .actions{display:flex; gap:8px; flex-wrap:wrap}
+    .pbtn{border:1px solid var(--line); background:#fff; padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:900; color:#0f172a}
+    .pbtn.primary{border-color:var(--accent); background:var(--accent); color:#fff}
+    .pbtn.danger{border-color:rgba(239,68,68,.4); color:#991b1b}
+    .pbtn.small{padding:8px 10px; font-size:12px}
+    .modal{position:fixed; inset:0; background:rgba(15,23,42,.65); display:none; align-items:center; justify-content:center; padding:14px; z-index:80}
     .modal.open{display:flex}
-    .panel{width:min(900px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;border:1px solid rgba(255,255,255,.2)}
-    .muted{color:var(--muted);font-size:12px}
+    .modal .panel{width:min(900px,100%); max-height:92vh; overflow:auto; background:#fff; border-radius:18px; border:1px solid rgba(255,255,255,.2)}
+    .modal header{position:sticky; top:0; border-top-left-radius:18px; border-top-right-radius:18px}
+    .hide{display:none !important}
+    @media print{ header,nav,.no-print{display:none !important} }
   </style>
 </head>
 <body>
-<header>
-  <div class="brand"><div class="logo">TP</div><div><div style="font-weight:1000">TechPartner <span style="color:#60a5fa">6.5</span></div><div class="muted" style="color:#a3b2c7">PWA • GitHub Pages</div></div></div>
-  <div class="row"><span id="netText" class="muted" style="color:#fff">Online</span></div>
-</header>
-<nav>
-  <button data-tab="assets" class="active">Aset</button>
-  <button data-tab="wo">WO</button>
-  <button data-tab="reports">Reports</button>
-</nav>
-<main>
-  <section id="view-assets">
-    <div class="card">
+  <header>
+    <div class="brand"><div class="logo">TP</div><div><h1>TechPartner <span style="color:#60a5fa">6.5</span></h1><small>Hybrid Modular • PWA</small></div></div>
+    <div class="topbtns">
+      <span class="pill"><span class="dot" id="netDot" style="background:var(--ok)"></span><span id="netText">Online</span></span>
+      <button class="btn" id="btnSync">Sync</button>
+      <button class="btn" id="btnSettings">Settings</button>
+    </div>
+  </header>
+
+  <nav class="no-print">
+    <button data-tab="assets" class="active">Aset</button>
+    <button data-tab="wo">WO</button>
+    <button data-tab="activity">Laporan</button>
+    <button data-tab="finance">Keuangan</button>
+    <button data-tab="reports">Reports</button>
+  </nav>
+
+  <main>
+    <section id="view-assets">
       <div class="grid">
-        <div class="col-4"><label>Site</label><select id="fSite"></select></div>
-        <div class="col-4"><label>Gedung</label><select id="fBuilding"></select></div>
-        <div class="col-4"><label>Lantai</label><select id="fFloor"></select></div>
-        <div class="col-4">
-          <label>Ruang/Zona</label>
-          <div class="row" style="gap:8px">
-            <div style="flex:1"><select id="fRoom"></select></div>
-            <button type="button" class="pbtn small" id="btnFilterRoomAdd">➕</button>
-            <button type="button" class="pbtn small" id="btnFilterRoomEdit">✏️</button>
-            <button type="button" class="pbtn small danger" id="btnFilterRoomDel">🗑</button>
-            <button type="button" class="pbtn small" id="btnFilterRoomManage">⚙</button>
+        <div class="col-12 card no-print">
+          <div class="row">
+            <div style="flex:1; min-width:220px">
+              <input id="q" placeholder="Cari cepat: lokasi / inventaris / merk / model / serial" />
+              <div class="muted" style="margin-top:6px">Tip: gunakan pencarian global untuk 200+ aset.</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <button class="pbtn" id="btnScan">Scan QR</button>
+              <button class="pbtn" id="btnAddAsset">Tambah Aset</button>
+              <button class="pbtn" id="btnLocations">Kelola Lokasi</button>
+              <button class="pbtn" id="btnBackup">Backup</button>
+              <button class="pbtn" id="btnRestore">Restore</button>
+            </div>
           </div>
-          <div class="muted" style="margin-top:6px">v6.5: tombol inline juga ada di filter utama.</div>
+
+          <div class="grid" style="margin-top:12px">
+            <div class="col-4"><label>Site</label><select id="fSite"></select></div>
+            <div class="col-4"><label>Gedung</label><select id="fBuilding"></select></div>
+            <div class="col-4"><label>Lantai</label><select id="fFloor"></select></div>
+
+            <div class="col-4">
+              <label>Ruang/Zona</label>
+              <div class="row" style="gap:8px">
+                <div style="flex:1"><select id="fRoom"></select></div>
+                <button type="button" class="pbtn small" id="btnFilterRoomAdd">➕</button>
+                <button type="button" class="pbtn small" id="btnFilterRoomEdit">✏️</button>
+                <button type="button" class="pbtn small danger" id="btnFilterRoomDel">🗑</button>
+                <button type="button" class="pbtn small" id="btnFilterRoomManage">⚙</button>
+              </div>
+              <div class="muted" style="margin-top:6px">Kelola ruang cepat dari filter.</div>
+            </div>
+
+            <div class="col-4"><label>Jenis</label><select id="fType"></select></div>
+            <div class="col-4"><label>Kondisi</label>
+              <select id="fCond"><option value="">Semua</option><option>Normal</option><option>Perlu Servis</option><option>Rusak</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div id="assetList" class="list"></div>
+          <div id="emptyAssets" class="card muted hide">Belum ada aset. Klik “Tambah Aset”.</div>
         </div>
       </div>
-      <div id="assetList" style="margin-top:12px"></div>
-    </div>
-  </section>
-  <section id="view-wo" style="display:none"><div class="card">(WO tersedia di repo kamu; paket ini fokus fitur lokasi v6.5)</div></section>
-  <section id="view-reports" style="display:none"><div class="card">(Reports tersedia di repo kamu; paket ini fokus fitur lokasi v6.5)</div></section>
-</main>
+    </section>
 
-<!-- Room Quick Modal (C2) -->
-<div class="modal" id="mRoom"><div class="panel" style="padding:14px">
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    <div><b id="roomTitle">Ruang</b><div class="muted">Rename + pindah lantai (full path)</div></div>
-    <button class="pbtn" id="btnCloseRoom">Tutup</button>
-  </div>
-  <form id="roomForm" class="grid" style="margin-top:12px">
-    <input type="hidden" id="roomId" />
-    <div class="col-4"><label>Nama Ruang</label><input id="roomName" /></div>
-    <div class="col-4"><label>Pindah ke Lantai (full path)</label><select id="roomFloor"></select></div>
-    <div class="col-12" style="display:flex;gap:8px"><button class="pbtn" type="submit">Simpan</button></div>
-  </form>
-</div></div>
+    <section id="view-wo" class="hide"><div class="card">(WO disederhanakan di paket ini)</div></section>
+    <section id="view-activity" class="hide"><div class="card">(Activity disederhanakan di paket ini)</div></section>
+    <section id="view-finance" class="hide"><div class="card">(Finance disederhanakan di paket ini)</div></section>
+    <section id="view-reports" class="hide"><div class="card">(Reports disederhanakan di paket ini)</div></section>
+  </main>
 
-<script type="module" src="./assets/app.js"></script>
+  <!-- Room Quick Modal -->
+  <div class="modal" id="mRoom"><div class="panel">
+    <header><div class="brand"><div class="logo">🏷</div><div><h1 id="roomTitle">Ruang</h1><small>Tambah/Edit (rename + pindah lantai)</small></div></div>
+      <div class="topbtns"><button class="btn" id="btnCloseRoom">Tutup</button></div>
+    </header>
+    <form id="roomForm" style="padding:14px" class="grid">
+      <input type="hidden" id="roomId" />
+      <div class="col-6"><label>Nama Ruang</label><input id="roomName" /></div>
+      <div class="col-6"><label>Pindah ke Lantai (full path)</label><select id="roomFloor"></select></div>
+      <div class="col-12 actions"><button class="pbtn primary" type="submit">Simpan</button></div>
+    </form>
+  </div></div>
+
+  <script type="module" src="./assets/app.js"></script>
 </body>
 </html>
