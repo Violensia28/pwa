@@ -1,4 +1,6 @@
 // assets/state.js
+// Global state + schema versioning + local persistence.
+
 export const SCHEMA_VERSION = 1;
 
 export const defaults = {
@@ -65,13 +67,17 @@ export function loadLocal() {
     if (!raw) return;
     const parsed = JSON.parse(raw);
     if (parsed && parsed.meta) state.db = parsed;
-  } catch (e) { console.warn('loadLocal failed', e); }
+  } catch (e) {
+    console.warn('loadLocal failed', e);
+  }
 }
 
 export function saveLocal() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(state.db));
-  } catch (e) { console.warn('saveLocal failed', e); }
+  } catch (e) {
+    console.warn('saveLocal failed (storage full?)', e);
+  }
 }
 
 export function saveConfig() {

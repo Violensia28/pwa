@@ -1,4 +1,6 @@
 // assets/qr.js
+// QR payload parser. (Camera scan implemented in qrscan.js)
+
 export function parseQRPayload(text) {
   const t = (text || '').trim();
   const m1 = t.match(/^tp6:\/\/asset\/(.+)$/);

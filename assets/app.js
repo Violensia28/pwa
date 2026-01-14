@@ -81,8 +81,11 @@ document.getElementById('btnExcel').onclick = () => downloadExcel();
 
 document.getElementById('btnScan').onclick = async () => {
   openModal('mScan');
-  try { await startScan({ onResult: (raw) => handleScanResult(raw) }); }
-  catch (e) { document.getElementById('scanStatus').textContent = 'Tidak bisa akses kamera. Klik Manual atau cek izin kamera.'; }
+  try {
+    await startScan({ onResult: (raw) => handleScanResult(raw) });
+  } catch (e) {
+    document.getElementById('scanStatus').textContent = 'Tidak bisa akses kamera. Klik Manual atau cek izin kamera.';
+  }
 };
 
 document.getElementById('btnCloseScan').onclick = () => { stopScan(); closeModal('mScan'); };
@@ -100,15 +103,11 @@ document.getElementById('btnTorch').onclick = async () => {
   if (!ok) alert('Torch tidak didukung di perangkat/browser ini.');
 };
 
-// Locations manager
+// Locations
+
 document.getElementById('btnLocations').onclick = () => openLocations();
 document.getElementById('btnCloseLoc').onclick = () => closeModal('mLoc');
 document.getElementById('btnAddLoc').onclick = (e) => { e.preventDefault(); addLocation(); };
-
-// Room quick modal (C2)
-document.getElementById('btnCloseRoom').onclick = () => closeModal('mRoom');
-document.getElementById('btnOpenLocMgr').onclick = () => { closeModal('mRoom'); openLocations(); };
-document.getElementById('roomForm').onsubmit = (e) => saveRoom(e);
 
 // Assets
 window.appOpenAsset = (id) => openAsset(id);
@@ -118,12 +117,6 @@ document.getElementById('btnDeleteAsset').onclick = () => deleteAsset();
 document.getElementById('btnAssetQR').onclick = () => showAssetQR();
 document.getElementById('assetForm').onsubmit = (e) => saveAsset(e);
 
-// Inline room buttons (asset modal)
-document.getElementById('btnRoomAdd').onclick = () => openRoomQuick('add', 'asset');
-document.getElementById('btnRoomEdit').onclick = () => openRoomQuick('edit', 'asset');
-document.getElementById('btnRoomDel').onclick = () => deleteRoomFrom('asset');
-document.getElementById('btnRoomManage').onclick = () => openLocations();
-
 // WO
 window.appOpenWO = (id, assetId) => openWO(id, assetId);
 document.getElementById('btnAddWO').onclick = () => openWO(null, null);
@@ -131,12 +124,6 @@ document.getElementById('btnCloseWO').onclick = () => closeModal('mWO');
 document.getElementById('btnDeleteWO').onclick = () => deleteCurrentWO();
 document.getElementById('btnVerifyWO').onclick = () => verifyCurrentWO();
 document.getElementById('woForm').onsubmit = (e) => saveWO(e);
-
-// Inline room buttons (WO modal)
-document.getElementById('btnWORoomAdd').onclick = () => openRoomQuick('add', 'wo');
-document.getElementById('btnWORoomEdit').onclick = () => openRoomQuick('edit', 'wo');
-document.getElementById('btnWORoomDel').onclick = () => deleteRoomFrom('wo');
-document.getElementById('btnWORoomManage').onclick = () => openLocations();
 
 // Activity
 window.appOpenAct = (id) => openAct(id);
@@ -172,7 +159,6 @@ document.getElementById('btnSaveSettings').onclick = () => {
   saveConfig();
   closeModal('mSettings');
   setRoleUI();
-  applyRoleLocks();
 };
 
 document.getElementById('btnClearLocal').onclick = () => {
@@ -194,8 +180,13 @@ function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 
 async function syncNow(){
-  try { await githubPull(); await githubPush('Sync (pull+push)'); alert('Sync sukses'); }
-  catch (e) { alert('Sync gagal: ' + e.message); }
+  try {
+    await githubPull();
+    await githubPush('Sync (pull+push)');
+    alert('Sync sukses');
+  } catch (e) {
+    alert('Sync gagal: ' + e.message);
+  }
   refreshAll();
 }
 
@@ -206,7 +197,6 @@ function refreshAll(){
   renderActivities();
   renderFinance();
   setRoleUI();
-  applyRoleLocks();
   refreshWOAssetOptions();
   refreshActWOOptions();
   refreshFinOptions();
@@ -226,15 +216,6 @@ function openSettings(){
   document.getElementById('docPrefix').value = state.db.meta?.doc_prefix || 'OPS-LOG';
   document.getElementById('docFormat').value = state.db.meta?.doc_format || '{PREFIX}/{SEQ3}/{ROMAN}/{YYYY}';
   openModal('mSettings');
-}
-
-function applyRoleLocks(){
-  const viewer = state.config.role === 'viewer';
-  // hide inline room controls for viewer
-  ['btnRoomAdd','btnRoomEdit','btnRoomDel','btnRoomManage','btnWORoomAdd','btnWORoomEdit','btnWORoomDel','btnWORoomManage'].forEach(id=>{
-    const el = document.getElementById(id);
-    if (el) el.style.display = viewer ? 'none' : '';
-  });
 }
 
 function handleScanResult(raw){
@@ -297,10 +278,10 @@ function fillLocParent(){
       addOpt(b.id, `GEDUNG: ${b.name} (${site?site.name:'-'})`);
     });
   } else {
-    // room -> parent must be floor
     state.db.locations.filter(x=>x.type==='floor').forEach(f => {
-      const path = fullFloorPath(f.id);
-      addOpt(f.id, path);
+      const b = state.db.locations.find(x=>x.id===f.parent);
+      const s = b ? state.db.locations.find(x=>x.id===b.parent) : null;
+      addOpt(f.id, `LANTAI: ${f.name} (${[s?.name,b?.name].filter(Boolean).join(' / ')})`);
     });
   }
 }
@@ -353,108 +334,6 @@ function escapeHtml(s){
   return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
 }
 
-function fullFloorPath(floorId){
-  const f = state.db.locations.find(x=>x.id===floorId);
-  if (!f) return '(Lantai tidak ditemukan)';
-  const b = state.db.locations.find(x=>x.id===f.parent);
-  const s = b ? state.db.locations.find(x=>x.id===b.parent) : null;
-  return [s?.name, b?.name, f?.name].filter(Boolean).join(' / ');
-}
-
-// ---------- Room Quick CRUD (Opsi C2) ----------
-function openRoomQuick(mode, from){
-  if (state.config.role === 'viewer') return alert('Mode atasan: tidak bisa edit.');
-  const roomSel = document.getElementById(from === 'wo' ? 'woLoc' : 'assetRoom');
-  const currentId = roomSel?.value || '';
-
-  document.getElementById('roomId').value = '';
-  document.getElementById('roomName').value = '';
-
-  // Fill floor options with full path (Option 2)
-  const floorSel = document.getElementById('roomFloor');
-  floorSel.innerHTML = '';
-  const floors = state.db.locations.filter(x=>x.type==='floor');
-  floors.forEach(f => {
-    const o = document.createElement('option');
-    o.value = f.id;
-    o.textContent = fullFloorPath(f.id);
-    floorSel.appendChild(o);
-  });
-
-  if (mode === 'edit') {
-    if (!currentId) return alert('Pilih ruang dulu.');
-    const r = state.db.locations.find(x=>x.id===currentId && x.type==='room');
-    if (!r) return alert('Ruang tidak ditemukan.');
-    document.getElementById('roomTitle').textContent = 'Edit Ruang (C2)';
-    document.getElementById('roomId').value = r.id;
-    document.getElementById('roomName').value = r.name;
-    // parent = floor
-    floorSel.value = r.parent || floors[0]?.id || '';
-  } else {
-    document.getElementById('roomTitle').textContent = 'Tambah Ruang';
-    // default: use current room's floor if any
-    if (currentId) {
-      const r = state.db.locations.find(x=>x.id===currentId && x.type==='room');
-      if (r?.parent) floorSel.value = r.parent;
-    }
-  }
-
-  openModal('mRoom');
-}
-
-function saveRoom(e){
-  e.preventDefault();
-  if (state.config.role === 'viewer') return alert('Mode atasan: tidak bisa edit.');
-
-  const id = document.getElementById('roomId').value;
-  const name = document.getElementById('roomName').value.trim();
-  const floorId = document.getElementById('roomFloor').value;
-  if (!name) return alert('Nama ruang wajib diisi.');
-  if (!floorId) return alert('Lantai tujuan wajib dipilih.');
-
-  // validate target is floor
-  const floor = state.db.locations.find(x=>x.id===floorId && x.type==='floor');
-  if (!floor) return alert('Parent tidak valid (harus lantai).');
-
-  if (id) {
-    // edit room (rename + move parent)
-    const r = state.db.locations.find(x=>x.id===id && x.type==='room');
-    if (!r) return alert('Ruang tidak ditemukan.');
-    r.name = name;
-    r.parent = floorId;
-  } else {
-    // add new room
-    const newId = uid('room');
-    state.db.locations.push({ id: newId, type:'room', parent: floorId, name });
-  }
-
-  saveLocal();
-  closeModal('mRoom');
-  // Refresh dropdown sources everywhere
-  refreshRoomOptions();
-  refreshWOAssetOptions();
-  initLocationFilters();
-  refreshAll();
-}
-
-function deleteRoomFrom(from){
-  if (state.config.role === 'viewer') return alert('Mode atasan: tidak bisa hapus.');
-  const sel = document.getElementById(from === 'wo' ? 'woLoc' : 'assetRoom');
-  const id = sel?.value || '';
-  if (!id) return alert('Pilih ruang dulu.');
-  const r = state.db.locations.find(x=>x.id===id && x.type==='room');
-  if (!r) return alert('Ruang tidak ditemukan.');
-  const usedByAsset = state.db.assets.some(a => a.location_id === id);
-  if (usedByAsset) return alert('Tidak bisa hapus: ruang masih dipakai oleh aset.');
-  if (!confirm(`Hapus ruang: ${r.name}?`)) return;
-  state.db.locations = state.db.locations.filter(x => x.id !== id);
-  saveLocal();
-  refreshRoomOptions();
-  refreshWOAssetOptions();
-  initLocationFilters();
-  refreshAll();
-}
-
 // ---------- Assets CRUD ----------
 function refreshAssetTypeOptions(){
   const sel = document.getElementById('assetType');
@@ -467,17 +346,11 @@ function refreshRoomOptions(){
   sel.innerHTML='';
   const rooms = state.db.locations.filter(x=>x.type==='room');
   if (rooms.length===0) {
-    const o=document.createElement('option'); o.value=''; o.textContent='(Buat ruang dulu)';
+    const o=document.createElement('option'); o.value=''; o.textContent='(Buat ruang dulu di Kelola Lokasi)';
     sel.appendChild(o);
     return;
   }
-  rooms.forEach(r => {
-    const f = state.db.locations.find(x=>x.id===r.parent);
-    const label = `${r.name} (${fullFloorPath(f?.id)})`;
-    const o=document.createElement('option');
-    o.value=r.id; o.textContent=label;
-    sel.appendChild(o);
-  });
+  rooms.forEach(r => { const o=document.createElement('option'); o.value=r.id; o.textContent=r.name; sel.appendChild(o); });
 }
 
 function openAsset(id){
@@ -557,12 +430,9 @@ function refreshWOAssetOptions(){
     sel.appendChild(o);
   });
   const loc = document.getElementById('woLoc');
-  loc.innerHTML = '<option value="">(Pilih ruang)</option>';
+  loc.innerHTML = '<option value="">(Pilih lokasi)</option>';
   state.db.locations.filter(x=>x.type==='room').forEach(r => {
-    const o=document.createElement('option');
-    o.value=r.id;
-    o.textContent = `${r.name} (${fullFloorPath(r.parent)})`;
-    loc.appendChild(o);
+    const o=document.createElement('option'); o.value=r.id; o.textContent=r.name; loc.appendChild(o);
   });
 }
 
@@ -797,5 +667,4 @@ function deleteCurrentFin(){
 })();
 
 setRoleUI();
-applyRoleLocks();
 refreshAll();

@@ -203,12 +203,81 @@ export function renderWO() {
   list.querySelectorAll('[data-edit-wo]').forEach(btn => btn.onclick = () => window.appOpenWO(btn.dataset.editWo));
 }
 
-export function renderActivities(){ document.getElementById('emptyAct').classList.toggle('hide', state.db.activities.length!==0); document.getElementById('actList').innerHTML = state.db.activities.map(a=>`<div class="item"><div class="badge b-info">${escapeHtml(a.tag||'Umum')}</div><div style="font-weight:1000; font-size:16px; margin-top:8px">${escapeHtml(a.title||'(Tanpa judul)')}</div><div class="muted">${a.date} • ${a.time||''} • WO: ${escapeHtml(a.wo_id||'-')}</div><div class="muted small" style="margin-top:8px">${escapeHtml(a.desc||'')}</div>${(a.photos?.before?.length||a.photos?.after?.length)?`<div class="row" style="margin-top:10px; gap:10px"><div style="min-width:160px">${firstThumb(a.photos?.before)}</div><div style="min-width:160px">${firstThumb(a.photos?.after)}</div></div>`:''}<div class="actions" style="margin-top:10px"><button class="pbtn" data-edit-act="${a.id}">Edit</button></div></div>`).join(''); document.querySelectorAll('[data-edit-act]').forEach(btn=>btn.onclick=()=>window.appOpenAct(btn.dataset.editAct)); }
+export function renderActivities() {
+  const list = document.getElementById('actList');
+  const empty = document.getElementById('emptyAct');
+  const items = [...state.db.activities];
+  empty.classList.toggle('hide', items.length !== 0);
 
-export function renderFinance(){ const items=[...state.db.finances]; document.getElementById('emptyFin').classList.toggle('hide', items.length!==0); document.getElementById('finTotal').textContent = fmtRp(items.reduce((acc,x)=>acc+(Number(x.cost)||0),0)); document.getElementById('finList').innerHTML = items.map(f=>`<div class="item"><div class="badge b-ok">${escapeHtml(f.category||'Lainnya')}</div><div style="font-weight:1000; font-size:16px; margin-top:8px">${escapeHtml(f.item||'(Tanpa item)')}</div><div class="muted">${f.date} • ${fmtRp(f.cost)}</div><div class="muted small">WO: ${escapeHtml(f.wo_id||'-')} • Aset: ${escapeHtml(f.asset_id||'-')} • Nota: ${escapeHtml(f.note_no||'-')}</div>${f.receipts?.length?`<div style="margin-top:10px">${firstThumb(f.receipts)}</div>`:''}<div class="actions" style="margin-top:10px"><button class="pbtn" data-edit-fin="${f.id}">Edit</button></div></div>`).join(''); document.querySelectorAll('[data-edit-fin]').forEach(btn=>btn.onclick=()=>window.appOpenFin(btn.dataset.editFin)); }
+  list.innerHTML = items.map(a => `
+    <div class="item">
+      <div class="badge b-info">${escapeHtml(a.tag||'Umum')}</div>
+      <div style="font-weight:1000; font-size:16px; margin-top:8px">${escapeHtml(a.title||'(Tanpa judul)')}</div>
+      <div class="muted">${a.date} • ${a.time||''} • WO: ${escapeHtml(a.wo_id||'-')}</div>
+      <div class="muted small" style="margin-top:8px">${escapeHtml(a.desc||'')}</div>
+      ${(a.photos?.before?.length||a.photos?.after?.length)?`<div class="row" style="margin-top:10px; gap:10px"><div style="min-width:160px">${firstThumb(a.photos?.before)}</div><div style="min-width:160px">${firstThumb(a.photos?.after)}</div></div>`:''}
+      <div class="actions" style="margin-top:10px"><button class="pbtn" data-edit-act="${a.id}">Edit</button></div>
+    </div>
+  `).join('');
 
-export function renderReportSummary(start,end){ const box=document.getElementById('repBox'); const s=start||document.getElementById('repStart').value; const e=end||document.getElementById('repEnd').value; const inRange=(d)=>d>=s&&d<=e; const wo=state.db.work_orders.filter(x=>x.date&&inRange(x.date)); const fin=state.db.finances.filter(x=>x.date&&inRange(x.date)); const done=wo.filter(x=>x.status==='Done'||x.status==='Verified').length; const open=wo.filter(x=>x.status==='Open'||x.status==='On Progress').length; const verified=wo.filter(x=>x.status==='Verified').length; const cost=fin.reduce((acc,x)=>acc+(Number(x.cost)||0),0); box.innerHTML = `<div style="display:flex; gap:10px; flex-wrap:wrap"><div class="card" style="flex:1; min-width:220px"><div class="muted">WO total</div><div style="font-size:22px;font-weight:1000">${wo.length}</div></div><div class="card" style="flex:1; min-width:220px"><div class="muted">WO selesai</div><div style="font-size:22px;font-weight:1000">${done}</div></div><div class="card" style="flex:1; min-width:220px"><div class="muted">WO pending</div><div style="font-size:22px;font-weight:1000">${open}</div></div><div class="card" style="flex:1; min-width:220px"><div class="muted">Verified</div><div style="font-size:22px;font-weight:1000">${verified}</div></div><div class="card" style="flex:1; min-width:220px"><div class="muted">Total Biaya</div><div style="font-size:22px;font-weight:1000">${fmtRp(cost)}</div></div></div><hr style="border:none;border-top:1px solid var(--line); margin:12px 0"><div class="muted">Periode: <b>${s}</b> s/d <b>${e}</b></div>`; }
+  list.querySelectorAll('[data-edit-act]').forEach(btn => btn.onclick = () => window.appOpenAct(btn.dataset.editAct));
+}
 
-export function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;"); }
+export function renderFinance() {
+  const list = document.getElementById('finList');
+  const empty = document.getElementById('emptyFin');
+  const items = [...state.db.finances];
+  empty.classList.toggle('hide', items.length !== 0);
+  document.getElementById('finTotal').textContent = fmtRp(items.reduce((acc,x)=>acc+(Number(x.cost)||0),0));
 
-export function setRoleUI(){ const viewer=state.config.role==='viewer'; document.querySelectorAll('#btnAddAsset,#btnAddWO,#btnAddAct,#btnAddFin,#btnLocations').forEach(el=>{ el.style.display = viewer ? 'none' : ''; }); }
+  list.innerHTML = items.map(f => `
+    <div class="item">
+      <div class="badge b-ok">${escapeHtml(f.category||'Lainnya')}</div>
+      <div style="font-weight:1000; font-size:16px; margin-top:8px">${escapeHtml(f.item||'(Tanpa item)')}</div>
+      <div class="muted">${f.date} • ${fmtRp(f.cost)}</div>
+      <div class="muted small">WO: ${escapeHtml(f.wo_id||'-')} • Aset: ${escapeHtml(f.asset_id||'-')} • Nota: ${escapeHtml(f.note_no||'-')}</div>
+      ${f.receipts?.length?`<div style="margin-top:10px">${firstThumb(f.receipts)}</div>`:''}
+      <div class="actions" style="margin-top:10px"><button class="pbtn" data-edit-fin="${f.id}">Edit</button></div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-edit-fin]').forEach(btn => btn.onclick = () => window.appOpenFin(btn.dataset.editFin));
+}
+
+export function renderReportSummary(start, end) {
+  const box = document.getElementById('repBox');
+  const s = start || document.getElementById('repStart').value;
+  const e = end || document.getElementById('repEnd').value;
+  const inRange = (d) => d >= s && d <= e;
+
+  const wo = state.db.work_orders.filter(x => x.date && inRange(x.date));
+  const fin = state.db.finances.filter(x => x.date && inRange(x.date));
+
+  const done = wo.filter(x => x.status==='Done' || x.status==='Verified').length;
+  const open = wo.filter(x => x.status==='Open' || x.status==='On Progress').length;
+  const verified = wo.filter(x => x.status==='Verified').length;
+  const cost = fin.reduce((acc,x)=>acc+(Number(x.cost)||0),0);
+
+  box.innerHTML = `
+    <div style="display:flex; gap:10px; flex-wrap:wrap">
+      <div class="card" style="flex:1; min-width:220px"><div class="muted">WO total</div><div style="font-size:22px;font-weight:1000">${wo.length}</div></div>
+      <div class="card" style="flex:1; min-width:220px"><div class="muted">WO selesai</div><div style="font-size:22px;font-weight:1000">${done}</div></div>
+      <div class="card" style="flex:1; min-width:220px"><div class="muted">WO pending</div><div style="font-size:22px;font-weight:1000">${open}</div></div>
+      <div class="card" style="flex:1; min-width:220px"><div class="muted">Verified</div><div style="font-size:22px;font-weight:1000">${verified}</div></div>
+      <div class="card" style="flex:1; min-width:220px"><div class="muted">Total Biaya</div><div style="font-size:22px;font-weight:1000">${fmtRp(cost)}</div></div>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--line); margin:12px 0">
+    <div class="muted">Periode: <b>${s}</b> s/d <b>${e}</b></div>
+  `;
+}
+
+export function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;");
+}
+
+export function setRoleUI() {
+  const viewer = state.config.role === 'viewer';
+  document.querySelectorAll('#btnAddAsset,#btnAddWO,#btnAddAct,#btnAddFin,#btnLocations').forEach(el=>{
+    el.style.display = viewer ? 'none' : '';
+  });
+}

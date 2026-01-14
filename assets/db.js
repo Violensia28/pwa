@@ -1,4 +1,6 @@
 // assets/db.js
+// GitHub sync + backup/restore.
+
 import { state, saveLocal } from './state.js';
 
 function b64Enc(str) {
@@ -13,7 +15,10 @@ export async function githubPull() {
   if (!gh_owner || !gh_repo || !gh_token) throw new Error('GitHub config belum lengkap');
   const url = `https://api.github.com/repos/${gh_owner}/${gh_repo}/contents/${gh_path}`;
   const res = await fetch(url, { headers: { 'Authorization': `token ${gh_token}` } });
-  if (res.status === 404) { await githubPush('Init DB'); return; }
+  if (res.status === 404) {
+    await githubPush('Init DB');
+    return;
+  }
   if (!res.ok) throw new Error(`GitHub pull gagal: ${res.status}`);
   const json = await res.json();
   state.sha = json.sha;
