@@ -30,24 +30,6 @@
       "type": "site",
       "parent": null,
       "name": "Mess Batoh"
-    },
-    {
-      "id": "b-utama",
-      "type": "building",
-      "parent": "site-kantor",
-      "name": "Gedung Utama"
-    },
-    {
-      "id": "f-lt1",
-      "type": "floor",
-      "parent": "b-utama",
-      "name": "Lt.1"
-    },
-    {
-      "id": "r-umum",
-      "type": "room",
-      "parent": "f-lt1",
-      "name": "Ruang Umum"
     }
   ],
   "asset_types": [
